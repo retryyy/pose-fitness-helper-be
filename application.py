@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS
 from functools import wraps
 import pymongo
 import jwt
@@ -8,6 +9,7 @@ import jwt
 import datetime
 
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = 'key'
 
 # client = pymongo.MongoClient('mongodb+srv://username:password@cluster0-xth9g.mongodb.net/Richard?retryWrites=true&w=majority')
