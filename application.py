@@ -1,10 +1,13 @@
 from flask import Flask, request
 from flask_cors import CORS
 from functools import wraps
+
 import pymongo
+import gridfs
+from bson.objectid import ObjectId
+
 import jwt
 import bcrypt
-import uuid
 import jwt
 import datetime
 
@@ -15,6 +18,64 @@ app.config['SECRET_KEY'] = 'key'
 # client = pymongo.MongoClient('mongodb+srv://username:password@cluster0-xth9g.mongodb.net/Richard?retryWrites=true&w=majority')
 client = pymongo.MongoClient('localhost', 27017)
 mongo = client.get_database('pose-fitness-helper')
+fs = gridfs.GridFS(mongo)
+
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "Authorization" in request.headers:
+            token = request.headers["Authorization"].split(" ")[1]
+        else:
+            return {"message": "Authentication token is missing!"}, 401
+
+        try:
+            data = decode_auth_token(token)
+            current_user = mongo.users.find_one(
+                {'_id': ObjectId(data['user_id'])})
+
+            if current_user is None:
+                return {"message": "User not found!"}, 401
+        except Exception as e:
+            return {"message": str(e)}, 500
+
+        return f(current_user, *args, **kwargs)
+    return decorated
+
+
+@app.route('/upload', methods=['POST'])
+@token_required
+def upload_file(current_user):
+    file = request.files["file"]
+    content = file.read()
+    file_name = file.filename
+
+    file_id = fs.put(content, filename=file_name)
+
+    mongo.users.update(
+        {'_id': ObjectId(current_user['_id'])},
+        {'$push': {
+            'docs': {
+                'file': str(file_id),
+                'skeleton': {}
+            }
+        }}
+    )
+
+    return {'message': 'All good'}, 200
+
+
+@app.route('/load', methods=['GET'])
+@token_required
+def load_file(current_user):
+    docs = current_user['docs'] if 'docs' in current_user else []
+
+    import base64
+
+    for doc in docs:
+        byte_file = fs.get(ObjectId(doc['file'])).read()
+        doc['file'] = base64.b64encode(byte_file).decode()
+    return {'data': docs}, 200
 
 
 @app.route('/login', methods=['POST'])
@@ -31,9 +92,9 @@ def login():
                 'message': 'User created!',
                 'data': jwt.encode(
                     {
-                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=1),
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=100),
                         'iat': datetime.datetime.utcnow(),
-                        'user_id': login_user['_id'],
+                        'user_id': str(login_user['_id']),
                         'name': name
                     },
                     app.config.get('SECRET_KEY'),
@@ -41,7 +102,7 @@ def login():
                 )
             }, 200
 
-    return {'messgae': 'Invalid login credentials'}, 401
+    return {'message': 'Invalid login credentials'}, 401
 
 
 @app.route('/register', methods=['POST'])
@@ -57,37 +118,14 @@ def register():
             payload['password'].encode('utf-8'), bcrypt.gensalt())
 
         user = {
-            '_id': uuid.uuid4().hex,
             'name': name,
             'password': hashpass
         }
 
-        users.insert(user)
+        users.insert_one(user)
         return {'message': f'User {name} created successfully!'}, 200
 
     return {'message': f'User {name} already exists!'}, 409
-
-
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if "Authorization" in request.headers:
-            token = request.headers["Authorization"].split(" ")[1]
-        else:
-            return {"message": "Authentication token is missing!"}, 401
-
-        try:
-            print(token)
-            data = decode_auth_token(token)
-            current_user = mongo.users.find_one({'name': data['name']})
-
-            if current_user is None:
-                return {"message": "User not found!"}, 401
-        except Exception as e:
-            return {"message": str(e)}, 500
-
-        return f(current_user, *args, **kwargs)
-    return decorated
 
 
 @staticmethod
@@ -108,7 +146,7 @@ def decode_auth_token(token):
 @app.route('/info', methods=['GET'])
 @token_required
 def info(current_user):
-    return 'magic'
+    return current_user
 
 
 if __name__ == '__main__':
