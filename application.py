@@ -10,6 +10,9 @@ import jwt
 import bcrypt
 import jwt
 import datetime
+import base64
+
+from service import trim_video
 
 app = Flask(__name__)
 CORS(app)
@@ -43,10 +46,24 @@ def token_required(f):
     return decorated
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/trim', methods=['POST'])
+@token_required
+def trim_file(current_user):
+    start = request.args.get('start')
+    end = request.args.get('end')
+    file = request.files["file"]
+
+    file.save(file.filename)
+
+    trim_video(file.filename, 'out.mp4', start, end)
+
+    return {'message': 'All good'}, 200
+
+
 @token_required
 def upload_file(current_user):
     file = request.files["file"]
+
     content = file.read()
     file_name = file.filename
 
@@ -56,21 +73,16 @@ def upload_file(current_user):
         {'_id': ObjectId(current_user['_id'])},
         {'$push': {
             'docs': {
-                'file': str(file_id),
-                'skeleton': {}
+                'file_id': str(file_id)
             }
         }}
     )
-
-    return {'message': 'All good'}, 200
 
 
 @app.route('/load', methods=['GET'])
 @token_required
 def load_file(current_user):
     docs = current_user['docs'] if 'docs' in current_user else []
-
-    import base64
 
     for doc in docs:
         byte_file = fs.get(ObjectId(doc['file'])).read()
@@ -141,12 +153,6 @@ def decode_auth_token(token):
     except jwt.InvalidTokenError as e:
         print(e)
         raise Exception('Invalid JWT token.')
-
-
-@app.route('/info', methods=['GET'])
-@token_required
-def info(current_user):
-    return current_user
 
 
 if __name__ == '__main__':
