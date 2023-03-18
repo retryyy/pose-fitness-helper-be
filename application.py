@@ -40,7 +40,7 @@ def token_required(f):
             if current_user is None:
                 return {"message": "User not found!"}, 401
         except Exception as e:
-            return {"message": str(e)}, 500
+            return {"message": str(e)}, 401
 
         return f(current_user, *args, **kwargs)
     return decorated
