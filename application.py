@@ -78,7 +78,8 @@ def upload_file(current_user):
         {'_id': ObjectId(current_user['_id'])},
         {'$push': {
             'docs': {
-                'file_id': str(file_id)
+                'file_id': str(file_id),
+                'created': datetime.datetime.utcnow()
             }
         }}
     )
