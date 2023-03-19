@@ -13,6 +13,7 @@ import datetime
 import base64
 
 from service import trim_video
+from util import image_to_byte_array
 
 app = Flask(__name__)
 CORS(app)
@@ -54,10 +55,13 @@ def trim_file(current_user):
     file = request.files["file"]
 
     file.save(file.filename)
+    trim_video(file.filename, 'out.gif', start, end)
+    trimmed_file = image_to_byte_array('out.gif')
 
-    trim_video(file.filename, 'out.mp4', start, end)
-
-    return {'message': 'All good'}, 200
+    return {
+        'message': 'Success',
+        'data': base64.b64encode(trimmed_file).decode()
+    }, 200
 
 
 @token_required
