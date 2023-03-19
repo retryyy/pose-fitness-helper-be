@@ -13,7 +13,7 @@ import datetime
 import base64
 
 from service import trim_video
-from util import image_to_byte_array
+from util import image_get_first_frame, image_to_byte_array
 
 app = Flask(__name__)
 CORS(app)
@@ -59,11 +59,12 @@ def trim_file(current_user):
     trimmed_file = image_to_byte_array('out.gif')
 
     return {
-        'message': 'Success',
+        'message': 'Trim of video was successful!',
         'data': base64.b64encode(trimmed_file).decode()
     }, 200
 
 
+@app.route('/upload', methods=['POST'])
 @token_required
 def upload_file(current_user):
     file = request.files["file"]
@@ -82,16 +83,29 @@ def upload_file(current_user):
         }}
     )
 
+    return {"message": "Upload of video was successful!"}, 200
+
 
 @app.route('/load', methods=['GET'])
 @token_required
-def load_file(current_user):
+def load_uploads(current_user):
     docs = current_user['docs'] if 'docs' in current_user else []
 
     for doc in docs:
-        byte_file = fs.get(ObjectId(doc['file'])).read()
-        doc['file'] = base64.b64encode(byte_file).decode()
+        byte_file = fs.get(ObjectId(doc['file_id'])).read()
+        first_frame = image_get_first_frame(byte_file)
+        doc['thumbnail'] = base64.b64encode(first_frame).decode()
     return {'data': docs}, 200
+
+
+@app.route('/load/<file_id>', methods=['GET'])
+@token_required
+def load_upload(current_user, file_id):
+    if not access_to_file(current_user, file_id):
+        return {'message': 'No access to file!'}, 403
+
+    byte_file = fs.get(ObjectId(file_id)).read()
+    return {'data': base64.b64encode(byte_file).decode()}, 200
 
 
 @app.route('/login', methods=['POST'])
@@ -142,6 +156,14 @@ def register():
         return {'message': f'User {name} created successfully!'}, 200
 
     return {'message': f'User {name} already exists!'}, 409
+
+
+@staticmethod
+def access_to_file(current_user, file_id):
+    for doc in current_user['docs']:
+        if doc['file_id'] == file_id:
+            return True
+    return False
 
 
 @staticmethod
