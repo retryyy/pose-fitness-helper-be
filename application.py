@@ -109,6 +109,24 @@ def load_upload(current_user, file_id):
     return {'data': base64.b64encode(byte_file).decode()}, 200
 
 
+@app.route('/delete/<file_id>', methods=['DELETE'])
+@token_required
+def delete_upload(current_user, file_id):
+    if not access_to_file(current_user, file_id):
+        return {'message': 'No access to file!'}, 403
+
+    fs.delete(ObjectId(file_id))
+    mongo.users.update(
+        {'_id': ObjectId(current_user['_id'])},
+        {'$pull': {
+            'docs': {
+                'file_id': file_id,
+            }
+        }}
+    )
+    return {'message': 'File deleted'}, 200
+
+
 @app.route('/login', methods=['POST'])
 def login():
     users = mongo.users
