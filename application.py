@@ -74,12 +74,19 @@ def upload_file(current_user):
 
     file_id = fs.put(content, filename=file_name)
 
+    first_frame = image_get_first_frame(content)
+    thumbnail_id = fs.put(
+        first_frame,
+        filename=f'{file_name.split(".")[0]}_thumbnail.jpg'
+    )
+
     mongo.users.update(
         {'_id': ObjectId(current_user['_id'])},
         {'$push': {
             'docs': {
                 'file_id': str(file_id),
-                'created': datetime.datetime.utcnow()
+                'created': datetime.datetime.utcnow(),
+                'thumbnail_id': str(thumbnail_id)
             }
         }}
     )
@@ -93,9 +100,8 @@ def load_uploads(current_user):
     docs = current_user['docs'] if 'docs' in current_user else []
 
     for doc in docs:
-        byte_file = fs.get(ObjectId(doc['file_id'])).read()
-        first_frame = image_get_first_frame(byte_file)
-        doc['thumbnail'] = base64.b64encode(first_frame).decode()
+        byte_file = fs.get(ObjectId(doc['thumbnail_id'])).read()
+        doc['thumbnail'] = base64.b64encode(byte_file).decode()
     return {'data': docs}, 200
 
 
@@ -115,7 +121,12 @@ def delete_upload(current_user, file_id):
     if not access_to_file(current_user, file_id):
         return {'message': 'No access to file!'}, 403
 
+    doc = next(
+        (doc for doc in current_user['docs'] if doc['file_id'] == file_id), None)
+
     fs.delete(ObjectId(file_id))
+    fs.delete(ObjectId(doc['thumbnail_id']))
+
     mongo.users.update(
         {'_id': ObjectId(current_user['_id'])},
         {'$pull': {
