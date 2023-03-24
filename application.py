@@ -11,6 +11,7 @@ import bcrypt
 import jwt
 import datetime
 import base64
+import json
 
 from service import trim_video
 from util import image_get_first_frame, image_to_byte_array
@@ -69,6 +70,9 @@ def trim_file(current_user):
 def upload_file(current_user):
     file = request.files["file"]
 
+    # check if body is empty
+    body = json.loads(request.form["body"])
+
     content = file.read()
     file_name = file.filename
 
@@ -86,7 +90,9 @@ def upload_file(current_user):
             'docs': {
                 'file_id': str(file_id),
                 'created': datetime.datetime.utcnow(),
-                'thumbnail_id': str(thumbnail_id)
+                'thumbnail_id': str(thumbnail_id),
+                'name': body['name'],
+                'type': body['type']
             }
         }}
     )
@@ -111,8 +117,17 @@ def load_upload(current_user, file_id):
     if not access_to_file(current_user, file_id):
         return {'message': 'No access to file!'}, 403
 
+    doc = get_doc_by_fileid(current_user, file_id)
+
     byte_file = fs.get(ObjectId(file_id)).read()
-    return {'data': base64.b64encode(byte_file).decode()}, 200
+
+    return {
+        'data': {
+            'file': base64.b64encode(byte_file).decode(),
+            'name': doc["name"],
+            'type': doc["type"]
+        }
+    }, 200
 
 
 @app.route('/delete/<file_id>', methods=['DELETE'])
@@ -121,8 +136,7 @@ def delete_upload(current_user, file_id):
     if not access_to_file(current_user, file_id):
         return {'message': 'No access to file!'}, 403
 
-    doc = next(
-        (doc for doc in current_user['docs'] if doc['file_id'] == file_id), None)
+    doc = get_doc_by_fileid(current_user, file_id)
 
     fs.delete(ObjectId(file_id))
     fs.delete(ObjectId(doc['thumbnail_id']))
@@ -140,11 +154,10 @@ def delete_upload(current_user, file_id):
 
 @app.route('/login', methods=['POST'])
 def login():
-    users = mongo.users
     payload = request.json
 
     name = payload['name']
-    login_user = users.find_one({'name': name})
+    login_user = mongo.users.find_one({'name': name})
 
     if login_user:
         if bcrypt.checkpw(payload['password'].encode('utf-8'), login_user['password']):
@@ -186,6 +199,11 @@ def register():
         return {'message': f'User {name} created successfully!'}, 200
 
     return {'message': f'User {name} already exists!'}, 409
+
+
+@staticmethod
+def get_doc_by_fileid(current_user, file_id):
+    return next((doc for doc in current_user['docs'] if doc['file_id'] == file_id), None)
 
 
 @staticmethod
