@@ -12,8 +12,7 @@ import datetime
 import base64
 import json
 
-from service import trim_video
-from util import image_get_first_frame, image_to_byte_array
+from util import image_get_first_frame, trim_video_opencv
 
 app = Flask(__name__)
 CORS(app)
@@ -50,13 +49,12 @@ def token_required(f):
 @app.route('/trim', methods=['POST'])
 @token_required
 def trim_file(current_user):
-    start = request.args.get('start')
-    end = request.args.get('end')
+    start = float(request.args.get('start'))
+    end = float(request.args.get('end'))
     file = request.files["file"]
 
     file.save(file.filename)
-    trim_video(file.filename, 'out.gif', start, end)
-    trimmed_file = image_to_byte_array('out.gif')
+    trimmed_file = trim_video_opencv(file.filename, start, end)
 
     return {
         'message': 'Trim of video was successful!',
