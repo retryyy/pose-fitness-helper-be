@@ -8,10 +8,12 @@ from bson.objectid import ObjectId
 
 import jwt
 import bcrypt
-import jwt
 import datetime
 import base64
 import json
+
+# import tf_pose
+# coco_style = tf_pose.infer(image_path)
 
 from service import trim_video
 from util import image_get_first_frame, image_to_byte_array
