@@ -12,7 +12,7 @@ import datetime
 import base64
 import json
 
-from util import image_get_first_frame, trim_video_opencv
+from util import image_get_first_frame, transform_image, trim_video_opencv
 
 app = Flask(__name__)
 CORS(app)
@@ -73,9 +73,11 @@ def upload_file(current_user):
     content = file.read()
     file_name = file.filename
 
-    file_id = fs.put(content, filename=file_name)
+    img = transform_image(content)
 
-    first_frame = image_get_first_frame(content)
+    file_id = fs.put(img, filename=file_name)
+
+    first_frame = image_get_first_frame(img)
     thumbnail_id = fs.put(
         first_frame,
         filename=f'{file_name.split(".")[0]}_thumbnail.jpg'
@@ -94,7 +96,7 @@ def upload_file(current_user):
         }}
     )
 
-    return {"message": "Upload of video was successful!"}, 200
+    return {"message": "Upload of video was successful!"}, 300
 
 
 @app.route('/load', methods=['GET'])
