@@ -27,6 +27,7 @@ fs = gridfs.GridFS(mongo)
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        request.files
         if "Authorization" in request.headers:
             token = request.headers["Authorization"].split(" ")[1]
         else:
