@@ -12,7 +12,7 @@ import datetime
 import base64
 import json
 
-from util import image_get_first_frame, transform_image, trim_video_opencv
+from util import image_get_first_frame, transform_image, trim_video
 
 app = Flask(__name__)
 CORS(app)
@@ -53,8 +53,7 @@ def trim_file(current_user):
     end = float(request.args.get('end'))
     file = request.files["file"]
 
-    file.save(file.filename)
-    trimmed_file = trim_video_opencv(file.filename, start, end)
+    trimmed_file = trim_video(file.read(), start, end)
 
     return {
         'message': 'Trim of video was successful!',
