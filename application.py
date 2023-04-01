@@ -65,31 +65,37 @@ def trim_file(current_user):
 @app.route('/upload', methods=['POST'])
 @token_required
 def upload_file(current_user):
-    file = request.files["file"]
-
-    # check if body is empty
+    files = request.files.getlist("files")
     body = json.loads(request.form["body"])
 
-    content = file.read()
-    file_name = file.filename
+    # check if body is empty
 
-    img, points = transform_image(content)
+    exercise_files = []
+    for file in files:
+        content = file.read()
+        file_name = file.filename
 
-    file_id = fs.put(img, filename=file_name)
+        img, points = transform_image(content)
 
-    first_frame = image_get_first_frame(img)
-    thumbnail_id = fs.put(first_frame)
+        file_id = fs.put(img, filename=file_name)
+
+        first_frame = image_get_first_frame(img)
+        thumbnail_id = fs.put(first_frame)
+
+        exercise_files.append({
+            'file_id': str(file_id),
+            'thumbnail_id': str(thumbnail_id),
+            'points': points,
+        })
 
     mongo.users.update(
         {'_id': ObjectId(current_user['_id'])},
         {'$push': {
-            'docs': {
-                'file_id': str(file_id),
+            'exercises': {
                 'created': datetime.datetime.utcnow(),
-                'thumbnail_id': str(thumbnail_id),
                 'name': body['name'],
                 'type': body['type'],
-                'points': points,
+                'files': exercise_files
             }
         }}
     )
