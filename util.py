@@ -6,10 +6,15 @@ import imageio.v3 as iio
 import numpy as np
 import mediapipe as mp
 
-HEIGHT = 600
 mp_draw = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
+
+HEIGHT = 600
+ALPHA = 0.4
+NEEDED_POINTS = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+POSE_CONNECTIONS = frozenset(
+    {(p1, p2) for p1, p2 in mp_pose.POSE_CONNECTIONS if p1 in NEEDED_POINTS and p2 in NEEDED_POINTS})
 
 
 def trim_video(file_content, start, end):
@@ -52,17 +57,38 @@ def transform_image(file_content):
     image.seek(0)
 
     frames = []
+    frames_points = []
     duration = 0
     try:
         while True:
+            points = {}
             duration += image.info['duration']
             image_rgb = np.array(image.convert('RGB'))
 
             results = pose.process(image_rgb)
-            mp_draw.draw_landmarks(
-                image_rgb, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+
+            for id, lm in enumerate(results.pose_landmarks.landmark):
+                if id not in NEEDED_POINTS:
+                    continue
+
+                h, w, _ = image_rgb.shape
+                points[str(id)] = (int(lm.x * w), int(lm.y * h))
+
+            shapes = np.zeros_like(image_rgb, np.uint8)
+
+            for p1, p2 in POSE_CONNECTIONS:
+                cv2.line(shapes, points[str(p1)], points[str(p2)],
+                         (255, 255, 255), thickness=4, lineType=8)
+
+            mask = shapes.astype(bool)
+            image_rgb[mask] = cv2.addWeighted(
+                image_rgb, ALPHA, shapes, 1 - ALPHA, 0)[mask]
+
+            for _, (x, y) in points.items():
+                cv2.circle(image_rgb, (x, y), 6, (255, 0, 0), cv2.FILLED)
 
             frames.append(image_rgb)
+            frames_points.append(points)
             image.seek(image.tell() + 1)
     except EOFError:
         fps = len(frames) / duration * 1000
@@ -70,4 +96,4 @@ def transform_image(file_content):
     res = io.BytesIO()
     imageio.mimwrite(res, frames, format='GIF', fps=fps)
 
-    return res.getvalue()
+    return res.getvalue(), frames_points

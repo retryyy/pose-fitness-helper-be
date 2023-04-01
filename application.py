@@ -73,15 +73,12 @@ def upload_file(current_user):
     content = file.read()
     file_name = file.filename
 
-    img = transform_image(content)
+    img, points = transform_image(content)
 
     file_id = fs.put(img, filename=file_name)
 
     first_frame = image_get_first_frame(img)
-    thumbnail_id = fs.put(
-        first_frame,
-        filename=f'{file_name.split(".")[0]}_thumbnail.jpg'
-    )
+    thumbnail_id = fs.put(first_frame)
 
     mongo.users.update(
         {'_id': ObjectId(current_user['_id'])},
@@ -91,7 +88,8 @@ def upload_file(current_user):
                 'created': datetime.datetime.utcnow(),
                 'thumbnail_id': str(thumbnail_id),
                 'name': body['name'],
-                'type': body['type']
+                'type': body['type'],
+                'points': points,
             }
         }}
     )
