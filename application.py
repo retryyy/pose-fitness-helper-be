@@ -71,7 +71,8 @@ def upload_file(current_user):
     # check if body is empty
 
     exercise_files = []
-    for file in files:
+    for i in range(len(files)):
+        file = files[i]
         content = file.read()
         file_name = file.filename
 
@@ -79,12 +80,12 @@ def upload_file(current_user):
 
         file_id = fs.put(img, filename=file_name)
 
-        first_frame = image_get_first_frame(img)
-        thumbnail_id = fs.put(first_frame)
+        if i == body['thumbnailIndex']:
+            first_frame = image_get_first_frame(img)
+            thumbnail_id = fs.put(first_frame)
 
         exercise_files.append({
             'file_id': str(file_id),
-            'thumbnail_id': str(thumbnail_id),
             'points': points,
         })
 
@@ -92,9 +93,11 @@ def upload_file(current_user):
         {'_id': ObjectId(current_user['_id'])},
         {'$push': {
             'exercises': {
+                '_id': ObjectId(),
                 'created': datetime.datetime.utcnow(),
                 'name': body['name'],
                 'type': body['type'],
+                'thumbnail_id': str(thumbnail_id),
                 'files': exercise_files
             }
         }}
@@ -103,34 +106,52 @@ def upload_file(current_user):
     return {"message": "Upload of video was successful!"}, 300
 
 
-@app.route('/load', methods=['GET'])
+@app.route('/exercises', methods=['GET'])
 @token_required
-def load_uploads(current_user):
-    docs = current_user['docs'] if 'docs' in current_user else []
+def load_exercises(current_user):
+    exercises = current_user['exercises'] if 'exercises' in current_user else [
+    ]
 
-    for doc in docs:
-        byte_file = fs.get(ObjectId(doc['thumbnail_id'])).read()
-        doc['thumbnail'] = base64.b64encode(byte_file).decode()
-    return {'data': docs}, 200
+    payload = []
+    for exercise in exercises:
+        byte_file = fs.get(ObjectId(exercise['thumbnail_id'])).read()
+
+        payload.append({
+            'id': str(exercise['_id']),
+            'created': exercise['created'],
+            'name': exercise['name'],
+            'type': exercise['type'],
+            'thumbnail': base64.b64encode(byte_file).decode(),
+            # 'files': [file['file_id'] for file in exercise['files']]
+        })
+    return {'data': payload}, 200
 
 
-@app.route('/load/<file_id>', methods=['GET'])
+@app.route('/exercises/<exercise_id>', methods=['GET'])
 @token_required
-def load_upload(current_user, file_id):
-    if not access_to_file(current_user, file_id):
-        return {'message': 'No access to file!'}, 403
+def load_exercise(current_user, exercise_id):
+    # if access_to_file(current_user, exercise_id) is None:
+    #     return {'message': 'No access to file!'}, 403
 
-    doc = get_doc_by_fileid(current_user, file_id)
+    exercise = next((exercise for exercise in current_user['exercises']
+                     if exercise['_id'] == ObjectId(exercise_id)), None)
 
-    byte_file = fs.get(ObjectId(file_id)).read()
+    files = []
+    for file in exercise['files']:
+        byte_file = fs.get(ObjectId(file['file_id'])).read()
+        content = base64.b64encode(byte_file).decode()
 
-    return {
-        'data': {
-            'file': base64.b64encode(byte_file).decode(),
-            'name': doc["name"],
-            'type': doc["type"]
-        }
-    }, 200
+        files.append({
+            'file': content
+        })
+
+    payload = {
+        'name': exercise['name'],
+        'type': exercise['type'],
+        'files': files
+    }
+
+    return {'data': payload}, 200
 
 
 @app.route('/delete/<file_id>', methods=['DELETE'])
@@ -139,19 +160,19 @@ def delete_upload(current_user, file_id):
     if not access_to_file(current_user, file_id):
         return {'message': 'No access to file!'}, 403
 
-    doc = get_doc_by_fileid(current_user, file_id)
+    # doc = get_doc_by_fileid(current_user, file_id)
 
-    fs.delete(ObjectId(file_id))
-    fs.delete(ObjectId(doc['thumbnail_id']))
+    # fs.delete(ObjectId(file_id))
+    # fs.delete(ObjectId(doc['thumbnail_id']))
 
-    mongo.users.update(
-        {'_id': ObjectId(current_user['_id'])},
-        {'$pull': {
-            'docs': {
-                'file_id': file_id,
-            }
-        }}
-    )
+    # mongo.users.update(
+    #     {'_id': ObjectId(current_user['_id'])},
+    #     {'$pull': {
+    #         'docs': {
+    #             'file_id': file_id,
+    #         }
+    #     }}
+    # )
     return {'message': 'File deleted'}, 200
 
 
@@ -205,16 +226,12 @@ def register():
 
 
 @staticmethod
-def get_doc_by_fileid(current_user, file_id):
-    return next((doc for doc in current_user['docs'] if doc['file_id'] == file_id), None)
-
-
-@staticmethod
 def access_to_file(current_user, file_id):
-    for doc in current_user['docs']:
-        if doc['file_id'] == file_id:
-            return True
-    return False
+    for exercise in current_user['exercises']:
+        for file in exercise['files']:
+            if file['file_id'] == file_id:
+                return file
+    return None
 
 
 @staticmethod
@@ -228,7 +245,6 @@ def decode_auth_token(token):
     except jwt.ExpiredSignatureError:
         raise Exception('JWT signature expired.')
     except jwt.InvalidTokenError as e:
-        print(e)
         raise Exception('Invalid JWT token.')
 
 

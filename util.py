@@ -67,25 +67,26 @@ def transform_image(file_content):
 
             results = pose.process(image_rgb)
 
-            for id, lm in enumerate(results.pose_landmarks.landmark):
-                if id not in NEEDED_POINTS:
-                    continue
+            if results.pose_landmarks:
+                for id, lm in enumerate(results.pose_landmarks.landmark):
+                    if id not in NEEDED_POINTS:
+                        continue
 
-                h, w, _ = image_rgb.shape
-                points[str(id)] = (int(lm.x * w), int(lm.y * h))
+                    h, w, _ = image_rgb.shape
+                    points[str(id)] = (int(lm.x * w), int(lm.y * h))
 
-            shapes = np.zeros_like(image_rgb, np.uint8)
+                shapes = np.zeros_like(image_rgb, np.uint8)
 
-            for p1, p2 in POSE_CONNECTIONS:
-                cv2.line(shapes, points[str(p1)], points[str(p2)],
-                         (255, 255, 255), thickness=4, lineType=8)
+                for p1, p2 in POSE_CONNECTIONS:
+                    cv2.line(shapes, points[str(p1)], points[str(p2)],
+                            (255, 255, 255), thickness=4, lineType=8)
 
-            mask = shapes.astype(bool)
-            image_rgb[mask] = cv2.addWeighted(
-                image_rgb, ALPHA, shapes, 1 - ALPHA, 0)[mask]
+                mask = shapes.astype(bool)
+                image_rgb[mask] = cv2.addWeighted(
+                    image_rgb, ALPHA, shapes, 1 - ALPHA, 0)[mask]
 
-            for _, (x, y) in points.items():
-                cv2.circle(image_rgb, (x, y), 6, (255, 0, 0), cv2.FILLED)
+                for _, (x, y) in points.items():
+                    cv2.circle(image_rgb, (x, y), 6, (255, 0, 0), cv2.FILLED)
 
             frames.append(image_rgb)
             frames_points.append(points)
