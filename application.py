@@ -158,7 +158,7 @@ def load_exercise(current_user, exercise_id, exercise):
     }, 200
 
 
-@app.route('/delete/<exercise_id>', methods=['DELETE'])
+@app.route('/exercises/<exercise_id>', methods=['DELETE'])
 @token_required
 @access_to_exercise
 def delete_upload(current_user, exercise_id, exercise):
