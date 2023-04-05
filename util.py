@@ -10,7 +10,7 @@ mp_draw = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
 
-HEIGHT = 600
+HEIGHT = 400
 ALPHA = 0.4
 NEEDED_POINTS = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
 POSE_CONNECTIONS = frozenset(
@@ -24,7 +24,7 @@ def trim_video(file_content, start, end):
     end_time = end * fps
 
     frames = []
-    for frame_count, frame in enumerate(iio.imread(file_content, format_hint=".mp4")):
+    for frame_count, frame in enumerate(iio.imiter(file_content, extension=".mp4")):
         if (frame_count >= start_time):
             if frame_count > end_time:
                 break
