@@ -102,6 +102,7 @@ def upload_file(current_user):
 
         exercise_files.append({
             'file_id': str(file_id),
+            'view': file_name.split('.')[0]
             # 'points': points,
         })
 
@@ -146,13 +147,15 @@ def load_exercise(current_user, exercise_id, exercise):
         content = base64.b64encode(byte_file).decode()
 
         files.append({
-            'file': content
+            'file': content,
+            'view': file['view']
         })
 
     return {
         'data': {
             'name': exercise['name'],
             'type': exercise['type'],
+            'created': exercise['created'],
             'files': files
         }
     }, 200
