@@ -12,7 +12,8 @@ import datetime
 import base64
 import json
 
-from util import image_get_first_frame, transform_image, trim_video
+from video_util import image_get_first_frame, transform_image, trim_video
+from pose_analyzer import pose_analyze
 
 app = Flask(__name__)
 CORS(app)
@@ -100,9 +101,13 @@ def upload_file(current_user):
             first_frame = image_get_first_frame(img)
             thumbnail_id = fs.put(first_frame)
 
+        view = file_name.split('.')[0]
+        exercise_type = body['type']
+
         exercise_files.append({
             'file_id': str(file_id),
-            'view': file_name.split('.')[0]
+            'view': view,
+            'analyze': pose_analyze(points, exercise_type, view)
             # 'points': points,
         })
 
@@ -110,7 +115,7 @@ def upload_file(current_user):
         'owner': current_user['_id'],
         'created': datetime.datetime.utcnow(),
         'name': body['name'],
-        'type': body['type'],
+        'type': exercise_type,
         'thumbnail_id': str(thumbnail_id),
         'files': exercise_files
     })
@@ -148,7 +153,8 @@ def load_exercise(current_user, exercise_id, exercise):
 
         files.append({
             'file': content,
-            'view': file['view']
+            'view': file['view'],
+            'analyze': file['analyze']
         })
 
     return {
