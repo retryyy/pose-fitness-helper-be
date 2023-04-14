@@ -12,7 +12,7 @@ import datetime
 import base64
 import json
 
-from video_util import image_get_first_frame, transform_image, trim_video
+from video_util import image_get_first_frame, trim_video
 from pose_analyzer import pose_analyze
 
 app = Flask(__name__)
@@ -68,11 +68,14 @@ def trim_file(current_user):
     end = float(request.args.get('end'))
     file = request.files["file"]
 
-    trimmed_file = trim_video(file.read(), start, end)
+    trimmed_file, points = trim_video(file.read(), start, end)
 
     return {
         'message': 'Trim of video was successful!',
-        'data': base64.b64encode(trimmed_file).decode()
+        'data': {
+            'movement': base64.b64encode(trimmed_file).decode(),
+            'points': points
+        }
     }, 200
 
 
@@ -81,6 +84,7 @@ def trim_file(current_user):
 def upload_file(current_user):
     files = request.files.getlist("files")
     body = json.loads(request.form["body"])
+    all_points = body['points']
 
     # check if body is empty
     length_files = len(files)
@@ -91,10 +95,11 @@ def upload_file(current_user):
     exercise_files = []
     for i in range(len(files)):
         file = files[i]
-        content = file.read()
+        img = file.read()
+        points = all_points[i]
         file_name = file.filename
 
-        img, points = transform_image(content)
+        # img, points = transform_image(content)
         file_id = fs.put(img, filename=file_name)
 
         if i == thumbnail_index:
@@ -107,8 +112,8 @@ def upload_file(current_user):
         exercise_files.append({
             'file_id': str(file_id),
             'view': view,
-            'analyze': pose_analyze(points, exercise_type, view)
-            # 'points': points,
+            'analyze': pose_analyze(points, exercise_type, view),
+            'points': points
         })
 
     mongo.exercises.insert_one({
