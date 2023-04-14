@@ -126,7 +126,9 @@ def upload_file(current_user):
 @app.route('/exercises', methods=['GET'])
 @token_required
 def load_exercises(current_user):
-    exercises = mongo.exercises.find({'owner': current_user['_id']})
+    exercises = mongo.exercises\
+        .find({'owner': current_user['_id']})\
+        .sort("created", pymongo.DESCENDING)
 
     payload = []
     for exercise in exercises:
