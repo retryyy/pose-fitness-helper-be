@@ -192,6 +192,18 @@ def delete_upload(current_user, exercise_id, exercise):
     mongo.exercises.delete_one({'_id': ObjectId(exercise_id)})
     return {'message': 'File deleted'}, 200
 
+@app.route('/exercises/<exercise_id>/test', methods=['GET'])
+@token_required
+@access_to_exercise
+def test(current_user, exercise_id, exercise):
+    spec_exercise = exercise['files'][0]
+
+    res = pose_analyze(spec_exercise['points'], exercise['type'], spec_exercise['view'])
+
+    from bson.json_util import dumps
+    return {'data': res}, 200
+
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -206,7 +218,7 @@ def login():
                 'message': 'User created!',
                 'data': jwt.encode(
                     {
-                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=100),
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=1000),
                         'iat': datetime.datetime.utcnow(),
                         'user_id': str(login_user['_id']),
                         'name': name
