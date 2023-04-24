@@ -20,7 +20,7 @@ CORS(app)
 app.config['SECRET_KEY'] = 'key'
 
 # client = pymongo.MongoClient('mongodb+srv://username:password@cluster0-xth9g.mongodb.net/Richard?retryWrites=true&w=majority')
-client = pymongo.MongoClient('localhost', 27017)
+client = pymongo.MongoClient('localhost', 27017, serverSelectionTimeoutMS=0)
 mongo = client.get_database('pose-fitness-helper')
 fs = gridfs.GridFS(mongo)
 
@@ -41,8 +41,11 @@ def token_required(f):
 
             if current_user is None:
                 return {"message": "User not found!"}, 401
+
+        except pymongo.errors.ConnectionFailure as e:
+            return {"message": "Error occured during thre connection to database!"}, 500
         except Exception as e:
-            return {"message": str(e)}, 401
+            return {"message": str(e)}, 500
 
         return f(*args, **kwargs, current_user=current_user)
     return decorated
@@ -192,17 +195,18 @@ def delete_upload(current_user, exercise_id, exercise):
     mongo.exercises.delete_one({'_id': ObjectId(exercise_id)})
     return {'message': 'File deleted'}, 200
 
+
 @app.route('/exercises/<exercise_id>/test', methods=['GET'])
 @token_required
 @access_to_exercise
 def test(current_user, exercise_id, exercise):
     spec_exercise = exercise['files'][0]
 
-    res = pose_analyze(spec_exercise['points'], exercise['type'], spec_exercise['view'])
+    res = pose_analyze(spec_exercise['points'],
+                       exercise['type'], spec_exercise['view'])
 
     from bson.json_util import dumps
     return {'data': res}, 200
-
 
 
 @app.route('/login', methods=['POST'])
@@ -250,6 +254,12 @@ def register():
         return {'message': f'User {name} created successfully!'}, 200
 
     return {'message': f'User {name} already exists!'}, 409
+
+
+@app.route('/ping', methods=['GET'])
+@token_required
+def ping(current_user):
+    return {'message': 'Works'}, 200
 
 
 @staticmethod

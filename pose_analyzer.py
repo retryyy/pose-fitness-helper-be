@@ -5,6 +5,7 @@ RIGHT_SHOULDER = 12
 RIGHT_ELBOW = 14
 LEFT_WRIST = 15
 RIGHT_WRIST = 16
+LEFT_HIP = 23
 RIGHT_HIP = 24
 RIGHT_KNEE = 26
 RIGHT_ANKLE = 28
@@ -14,6 +15,8 @@ def pose_analyze(points, exercise_type, view):
     if exercise_type == 'SQUAT':
         if view == 'side':
             return squat_side(points)
+        elif view == 'front':
+            return squat_front(points)
         return {}
     elif exercise_type == 'DUMBBELL_SHOULDER_PRESS':
         if view == 'front':
@@ -49,6 +52,32 @@ def squat_side(points):
 
     return analyze_degree(points, checks)
 
+def squat_front(points):
+    checks = [{
+        'func': lambda degree: degree > 90,
+        'points': (RIGHT_SHOULDER, RIGHT_KNEE, LEFT_HIP),
+        'fulfilled': {
+            'append': 'incorrect',
+            'message': 'Knees are pointing inside too much that can cause knee pain',
+        },
+        'not_fulfilled': {
+            'append': 'correct',
+            'message': 'Knees are pointing outside which is good for the knees'
+        }
+    }, {
+        'func': lambda degree: degree > 5,
+        'points': (RIGHT_SHOULDER, LEFT_SHOULDER, RIGHT_HIP, LEFT_HIP),
+        'fulfilled': {
+            'append': 'incorrect',
+            'message': 'Either the shoulders or the wrists are not horizontal',
+        },
+        'not_fulfilled': {
+            'append': 'correct',
+            'message': "Perfectly held the shoulders and the wrists horizontally"
+        }
+    }]
+
+    return analyze_degree(points, checks)
 
 def dumbbell_shoulder_press_front(points):
     checks = [{
@@ -63,7 +92,7 @@ def dumbbell_shoulder_press_front(points):
             'message': 'Hands are pointing too much to the sides on the top'
         }
     }, {
-        'func': lambda degree: degree < 80,
+        'func': lambda degree: degree < 70,
         'points': (RIGHT_ELBOW, RIGHT_SHOULDER, RIGHT_HIP),
         'fulfilled': {
             'append': 'incorrect',
@@ -82,7 +111,7 @@ def dumbbell_shoulder_press_front(points):
         },
         'not_fulfilled': {
             'append': 'correct',
-            'message': "Perfectly held the shoulders and the wrists"
+            'message': "Perfectly held the shoulders and the wrists horizontally"
         }
     }]
 
