@@ -71,6 +71,12 @@ def trim_file(current_user):
     end = float(request.args.get('end'))
     file = request.files["file"]
 
+    file_size = int(request.headers['Content-length'])/(1024 * 1024)
+    if file_size > 30:
+        return {"message": "File is too big! Maximum file size is 30MB"}, 413
+    if file.content_type != 'video/mp4':
+        return {"message": "Unsupported file extension! Only MP4 is accepted"}, 415
+
     trimmed_file, points = trim_video(file.read(), start, end)
 
     return {
@@ -85,50 +91,56 @@ def trim_file(current_user):
 @app.route('/upload', methods=['POST'])
 @token_required
 def upload_file(current_user):
-    files = request.files.getlist("files")
-    body = json.loads(request.form["body"])
-    all_points = body['points']
+    try:
+        files = request.files.getlist("files")
+        body = json.loads(request.form["body"])
+        all_points = body['points']
+        length_files = len(files)
+        name = body['name']
 
-    # check if body is empty
-    length_files = len(files)
+        if length_files == 0:
+            return {"message": "No file was included!"}, 400
+        if len(name) < 5:
+            return {"message": "Exercise name needs to be minimum 5 letters!"}, 400
 
-    index_correct = "thumbnailIndex" in body and length_files > body['thumbnailIndex'] >= 0
-    thumbnail_index = body['thumbnailIndex'] if index_correct else 0
+        index_correct = "thumbnailIndex" in body and length_files > body['thumbnailIndex'] >= 0
+        thumbnail_index = body['thumbnailIndex'] if index_correct else 0
 
-    exercise_files = []
-    for i in range(len(files)):
-        file = files[i]
-        img = file.read()
-        points = all_points[i]
-        file_name = file.filename
+        exercise_files = []
+        for i in range(len(files)):
+            file = files[i]
+            img = file.read()
+            points = all_points[i]
+            file_name = file.filename
 
-        # img, points = transform_image(content)
-        file_id = fs.put(img, filename=file_name)
+            file_id = fs.put(img, filename=file_name)
 
-        if i == thumbnail_index:
-            first_frame = image_get_first_frame(img)
-            thumbnail_id = fs.put(first_frame)
+            if i == thumbnail_index:
+                first_frame = image_get_first_frame(img)
+                thumbnail_id = fs.put(first_frame)
 
-        view = file_name.split('.')[0]
-        exercise_type = body['type']
+            view = file_name.split('.')[0]
+            exercise_type = body['type']
 
-        exercise_files.append({
-            'file_id': str(file_id),
-            'view': view,
-            'analyze': pose_analyze(points, exercise_type, view),
-            'points': points
+            exercise_files.append({
+                'file_id': str(file_id),
+                'view': view,
+                'analyze': pose_analyze(points, exercise_type, view),
+                'points': points
+            })
+
+        mongo.exercises.insert_one({
+            'owner': current_user['_id'],
+            'created': datetime.datetime.utcnow(),
+            'name': name,
+            'type': exercise_type,
+            'thumbnail_id': str(thumbnail_id),
+            'files': exercise_files
         })
 
-    mongo.exercises.insert_one({
-        'owner': current_user['_id'],
-        'created': datetime.datetime.utcnow(),
-        'name': body['name'],
-        'type': exercise_type,
-        'thumbnail_id': str(thumbnail_id),
-        'files': exercise_files
-    })
-
-    return {"message": "Upload of video was successful!"}, 300
+        return {"message": "Upload of video was successful!"}, 200
+    except KeyError as e:
+        return {"message": "Request body error: " + str(e)}, 400
 
 
 @app.route('/exercises', methods=['GET'])
