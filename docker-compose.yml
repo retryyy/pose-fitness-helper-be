@@ -1,0 +1,19 @@
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+    - 27017:27017
+
+  backend:
+    build: .
+    links:
+      - "mongo:mongo"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ../pose-fitness-helper-fe
+    ports:
+      - "4200:80"

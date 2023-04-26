@@ -11,16 +11,15 @@ import bcrypt
 import datetime
 import base64
 import json
+import os
 
 from video_util import image_get_first_frame, trim_video
 from pose_analyzer import pose_analyze
 
 app = Flask(__name__)
 CORS(app)
-app.config['SECRET_KEY'] = 'key'
 
-# client = pymongo.MongoClient('mongodb+srv://username:password@cluster0-xth9g.mongodb.net/Richard?retryWrites=true&w=majority')
-client = pymongo.MongoClient('localhost', 27017, serverSelectionTimeoutMS=0)
+client = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_HOST"]}:{os.environ["MONGO_PORT"]}', serverSelectionTimeoutMS=0)
 mongo = client.get_database('pose-fitness-helper')
 fs = gridfs.GridFS(mongo)
 
@@ -43,9 +42,9 @@ def token_required(f):
                 return {"message": "User not found!"}, 401
 
         except pymongo.errors.ConnectionFailure as e:
-            return {"message": "Error occured during thre connection to database!"}, 500
+            return {"message": "Error occured during the connection to database!"}, 500
         except Exception as e:
-            return {"message": str(e)}, 500
+            return {"message": str(e)}, 401
 
         return f(*args, **kwargs, current_user=current_user)
     return decorated
@@ -239,7 +238,7 @@ def login():
                         'user_id': str(login_user['_id']),
                         'name': name
                     },
-                    app.config.get('SECRET_KEY'),
+                    os.environ["SECRET_KEY"],
                     algorithm='HS256'
                 )
             }, 200
@@ -279,7 +278,7 @@ def decode_auth_token(token):
     try:
         return jwt.decode(
             token,
-            app.config.get('SECRET_KEY'),
+            os.environ["SECRET_KEY"],
             algorithms='HS256'
         )
     except jwt.ExpiredSignatureError:
@@ -289,4 +288,4 @@ def decode_auth_token(token):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
