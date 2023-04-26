@@ -1,5 +1,5 @@
 {
-    "python.defaultInterpreterPath": "C:\\Users\\valen\\anaconda3\\envs\\pose-fitness-helper-env\\python.exe",
+    "python.defaultInterpreterPath": "D:\\anaconda3\\envs\\pose\\python.exe",
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
         "./auth"

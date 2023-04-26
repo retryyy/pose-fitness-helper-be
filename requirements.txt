@@ -11,7 +11,7 @@ Flask==2.2.2
 Flask-Cors==3.0.10
 flatbuffers==23.3.3
 fonttools==4.39.3
-imageio==2.28.0
+imageio==2.26.1
 imageio-ffmpeg==0.4.8
 itsdangerous==2.0.1
 Jinja2==3.1.2
@@ -22,7 +22,7 @@ mediapipe==0.9.3.0
 numpy==1.22.3
 opencv-contrib-python==4.7.0.72
 packaging==23.1
-Pillow==9.4.0
+Pillow==9.3.0
 pip==23.0.1
 protobuf==3.20.3
 psutil==5.9.5

@@ -1,3 +1,4 @@
+name: pose-fitness-helper
 services:
   mongo:
     image: mongo:latest
