@@ -89,7 +89,7 @@ def trim_file(current_user):
 
 @app.route('/upload', methods=['POST'])
 @token_required
-def upload_file(current_user):
+def upload_exercise(current_user):
     try:
         files = request.files.getlist("files")
         body = json.loads(request.form["body"])
@@ -141,6 +141,33 @@ def upload_file(current_user):
     except KeyError as e:
         return {"message": "Request body error: " + str(e)}, 400
 
+@app.route('/exercises/<exercise_id>/files', methods=['POST'])
+@token_required
+@access_to_exercise
+def add_exercise_file(current_user, exercise_id, exercise):
+    file = request.files["file"]
+    body = json.loads(request.form["body"])
+
+    img = file.read()
+    points = body['points']
+    view = body['view']
+    file_name = file.filename
+
+    file_id = fs.put(img, filename=file_name)
+
+    mongo.exercises.update(
+        {'_id': ObjectId(exercise_id)},
+        {'$push': {
+            'files': {
+                'file_id': str(file_id),
+                'view': view,
+                'analyze': pose_analyze(points, exercise['type'], view),
+                'points': points
+            }
+        }}
+    )
+
+    return {'message': 'File added to exercise'}, 200
 
 @app.route('/exercises', methods=['GET'])
 @token_required
@@ -208,7 +235,7 @@ def delete_exercise(current_user, exercise_id, exercise):
     return {'message': 'Exercise deleted'}, 200
 
 
-@app.route('/exercises/<exercise_id>/file/<file_id>', methods=['DELETE'])
+@app.route('/exercises/<exercise_id>/files/<file_id>', methods=['DELETE'])
 @token_required
 @access_to_exercise
 def delete_exercise_file(current_user, exercise_id, file_id, exercise):
