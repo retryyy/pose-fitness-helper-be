@@ -44,7 +44,7 @@ def token_required(f):
         except pymongo.errors.ConnectionFailure as e:
             return {"message": "Error occured during the connection to database!"}, 500
         except Exception as e:
-            return {"message": str(e)}, 401
+            return {"message": str(e)}, 500
 
         return f(*args, **kwargs, current_user=current_user)
     return decorated
@@ -181,6 +181,7 @@ def load_exercise(current_user, exercise_id, exercise):
         content = base64.b64encode(byte_file).decode()
 
         files.append({
+            'file_id': file['file_id'],
             'file': content,
             'view': file['view'],
             'analyze': file['analyze']
@@ -199,12 +200,28 @@ def load_exercise(current_user, exercise_id, exercise):
 @app.route('/exercises/<exercise_id>', methods=['DELETE'])
 @token_required
 @access_to_exercise
-def delete_upload(current_user, exercise_id, exercise):
+def delete_exercise(current_user, exercise_id, exercise):
     fs.delete(ObjectId(exercise['thumbnail_id']))
     for file in exercise['files']:
         fs.delete(ObjectId(file['file_id']))
     mongo.exercises.delete_one({'_id': ObjectId(exercise_id)})
-    return {'message': 'File deleted'}, 200
+    return {'message': 'Exercise deleted'}, 200
+
+
+@app.route('/exercises/<exercise_id>/file/<file_id>', methods=['DELETE'])
+@token_required
+@access_to_exercise
+def delete_exercise_file(current_user, exercise_id, file_id, exercise):
+    fs.delete(ObjectId(file_id))
+    mongo.exercises.update(
+        {'_id': ObjectId(exercise_id)},
+        {'$pull': {
+            'files': {
+                'file_id': file_id,
+            }
+        }}
+    )
+    return {'message': 'File for exercise deleted'}, 200
 
 
 @app.route('/exercises/<exercise_id>/test', methods=['GET'])
@@ -230,20 +247,10 @@ def login():
     if login_user:
         if bcrypt.checkpw(payload['password'].encode('utf-8'), login_user['password']):
             return {
-                'message': 'User created!',
-                'data': jwt.encode(
-                    {
-                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=1000),
-                        'iat': datetime.datetime.utcnow(),
-                        'user_id': str(login_user['_id']),
-                        'name': name
-                    },
-                    os.environ["SECRET_KEY"],
-                    algorithm='HS256'
-                )
+                'message': 'User logged in!',
+                'data': create_token(str(login_user['_id']), name)
             }, 200
-
-    return {'message': 'Invalid login credentials'}, 401
+    return {'message': 'Invalid login credentials'}, 403
 
 
 @app.route('/register', methods=['POST'])
@@ -258,11 +265,15 @@ def register():
         hashpass = bcrypt.hashpw(
             payload['password'].encode('utf-8'), bcrypt.gensalt())
 
-        users.insert_one({
+        user = users.insert_one({
             'name': name,
             'password': hashpass
         })
-        return {'message': f'User {name} created successfully!'}, 200
+        user_id = str(user.inserted_id)
+        return {
+            'message': f'User {name} created successfully!',
+            'data': create_token(user_id, name)
+        }, 200
 
     return {'message': f'User {name} already exists!'}, 409
 
@@ -272,6 +283,19 @@ def register():
 def ping(current_user):
     return {'message': 'Works'}, 200
 
+
+@staticmethod
+def create_token(user_id, name):
+    return jwt.encode(
+        {
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=1000),
+            'iat': datetime.datetime.utcnow(),
+            'user_id': user_id,
+            'name': name
+        },
+        os.environ["SECRET_KEY"],
+        algorithm='HS256'
+    )
 
 @staticmethod
 def decode_auth_token(token):
