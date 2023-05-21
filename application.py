@@ -12,6 +12,7 @@ import datetime
 import base64
 import json
 import os
+from pose import POSE_DEGREE_CHECK
 
 from video_util import image_get_first_frame, trim_video
 from pose_analyzer import pose_analyze
@@ -19,9 +20,22 @@ from pose_analyzer import pose_analyze
 app = Flask(__name__)
 CORS(app)
 
-client = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_HOST"]}:{os.environ["MONGO_PORT"]}', serverSelectionTimeoutMS=0)
+client = pymongo.MongoClient(
+    f'mongodb://{os.environ["MONGO_HOST"]}:{os.environ["MONGO_PORT"]}', serverSelectionTimeoutMS=0)
 mongo = client.get_database('pose-fitness-helper')
 fs = gridfs.GridFS(mongo)
+
+
+def mongo_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        try:
+            client.server_info()
+        except pymongo.errors.ServerSelectionTimeoutError:
+            return {"message": "Error occured during the connection to database!"}, 500
+
+        return f(*args, **kwargs)
+    return decorated
 
 
 def token_required(f):
@@ -41,7 +55,9 @@ def token_required(f):
             if current_user is None:
                 return {"message": "User not found!"}, 401
 
-        except pymongo.errors.ConnectionFailure as e:
+        except jwt.PyJWTError as e:
+            return {"message": str(e)}, 401
+        except pymongo.errors.ConnectionFailure:
             return {"message": "Error occured during the connection to database!"}, 500
         except Exception as e:
             return {"message": str(e)}, 500
@@ -141,6 +157,7 @@ def upload_exercise(current_user):
     except KeyError as e:
         return {"message": "Request body error: " + str(e)}, 400
 
+
 @app.route('/exercises/<exercise_id>/files', methods=['POST'])
 @token_required
 @access_to_exercise
@@ -168,6 +185,7 @@ def add_exercise_file(current_user, exercise_id, exercise):
     )
 
     return {'message': 'File added to exercise'}, 200
+
 
 @app.route('/exercises', methods=['GET'])
 @token_required
@@ -251,6 +269,12 @@ def delete_exercise_file(current_user, exercise_id, file_id, exercise):
     return {'message': 'File for exercise deleted'}, 200
 
 
+@app.route('/config/posetypes', methods=['GET'])
+def load_pose_types():
+    return {exercise_type: list(POSE_DEGREE_CHECK[exercise_type].keys())
+            for exercise_type in POSE_DEGREE_CHECK.keys()}
+
+
 @app.route('/exercises/<exercise_id>/test', methods=['GET'])
 @token_required
 @access_to_exercise
@@ -258,13 +282,15 @@ def test(current_user, exercise_id, exercise):
     spec_exercise = exercise['files'][0]
 
     res = pose_analyze(spec_exercise['points'],
-                       exercise['type'], spec_exercise['view'])
+                       exercise['type'], 
+                       spec_exercise['view'])
 
     from bson.json_util import dumps
     return {'data': res}, 200
 
 
 @app.route('/login', methods=['POST'])
+@mongo_check
 def login():
     payload = request.json
 
@@ -281,6 +307,7 @@ def login():
 
 
 @app.route('/register', methods=['POST'])
+@mongo_check
 def register():
     users = mongo.users
     payload = request.json
@@ -324,6 +351,7 @@ def create_token(user_id, name):
         algorithm='HS256'
     )
 
+
 @staticmethod
 def decode_auth_token(token):
     try:
@@ -333,9 +361,9 @@ def decode_auth_token(token):
             algorithms='HS256'
         )
     except jwt.ExpiredSignatureError:
-        raise Exception('JWT signature expired.')
+        raise jwt.PyJWTError('JWT signature expired.')
     except jwt.InvalidTokenError as e:
-        raise Exception('Invalid JWT token.')
+        raise jwt.PyJWTError('Invalid JWT token.')
 
 
 if __name__ == '__main__':
