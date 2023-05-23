@@ -271,8 +271,8 @@ def delete_exercise_file(current_user, exercise_id, file_id, exercise):
 
 @app.route('/config/posetypes', methods=['GET'])
 def load_pose_types():
-    return {exercise_type: list(POSE_DEGREE_CHECK[exercise_type].keys())
-            for exercise_type in POSE_DEGREE_CHECK.keys()}
+    with open("exercises.json", "r") as read_file:
+        return {'data': json.load(read_file)}, 200
 
 
 @app.route('/exercises/<exercise_id>/test', methods=['GET'])
@@ -282,7 +282,7 @@ def test(current_user, exercise_id, exercise):
     spec_exercise = exercise['files'][0]
 
     res = pose_analyze(spec_exercise['points'],
-                       exercise['type'], 
+                       exercise['type'],
                        spec_exercise['view'])
 
     from bson.json_util import dumps

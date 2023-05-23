@@ -1,0 +1,5 @@
+{
+    "BARBELL_BACK_SQUAT": ["front", "side"],
+    "DUMBBELL_SHOULDER_PRESS": ["front"],
+    "DUMBBELL_ROWS": ["side"]
+}

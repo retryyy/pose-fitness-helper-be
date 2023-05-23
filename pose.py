@@ -78,7 +78,7 @@ POSE_DEGREE_CHECK = {
             },
             'not_fulfilled': {
                 'append': 'correct',
-                'message': "Didn't let elbows too much under the shoulders"
+                'message': "Didn't let the elbows too much under the shoulders"
             }
         }, {
             'func': lambda degree: degree > 5,
