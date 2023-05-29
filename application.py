@@ -285,7 +285,6 @@ def test(current_user, exercise_id, exercise):
                        exercise['type'],
                        spec_exercise['view'])
 
-    from bson.json_util import dumps
     return {'data': res}, 200
 
 
