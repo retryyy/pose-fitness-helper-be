@@ -35,7 +35,7 @@ def analyze_degree(all_points, checks):
         else:
             incorrect.append(message)
 
-    return collect_result(correct, incorrect, 80)
+    return correct, incorrect
 
 
 def calculate_degree(points, point_name1, point_name2, point_name3):
@@ -67,7 +67,6 @@ def calculate_closed_degree(x1, y1, x2, y2, x3, y3):
     angle_rad = math.acos(dot_product / (magnitude1 * magnitude2))
 
     angle_deg = math.degrees(angle_rad)
-    # print('closed', angle_deg)
 
     return angle_deg
 
@@ -92,14 +91,5 @@ def calculate_closed_degree_between_lines(x1, y1, x2, y2, x3, y3, x4, y4):
 
     # Convert the angle to degrees
     angle_deg = math.degrees(angle_rad)
-    print('between', angle_deg)
 
     return angle_deg
-
-
-def collect_result(correct, incorrect, score):
-    return {
-        'correct': correct,
-        'incorrect': incorrect,
-        'score': score
-    }

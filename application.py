@@ -279,13 +279,13 @@ def load_pose_types():
 @token_required
 @access_to_exercise
 def test(current_user, exercise_id, exercise):
-    spec_exercise = exercise['files'][0]
+    spec_exercise = exercise['files'][1]
 
-    res = pose_analyze(spec_exercise['points'],
+    result = pose_analyze(spec_exercise['points'],
                        exercise['type'],
                        spec_exercise['view'])
 
-    return {'data': res}, 200
+    return {'data': result}, 200
 
 
 @app.route('/login', methods=['POST'])

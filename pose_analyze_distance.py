@@ -1,13 +1,22 @@
+import sys
 import numpy as np
 from fastdtw import fastdtw
 import numpy as np
 
 
 def analyze_distance(all_points, benchmark_movement):
-    res, _ = fastdtw(get_coordinates(all_points), get_coordinates(
-        benchmark_movement), dist=euclidean_distance)
-    print(res)
-    return None
+    arr1 = get_coordinates(all_points)
+    arr2 = get_coordinates(benchmark_movement)
+
+    np.set_printoptions(threshold=sys.maxsize)
+
+    n1 = np.zeros_like(arr1)
+    n2 = np.ones_like(arr2)
+
+    res1, _ = fastdtw(n1, n2, dist=euclidean_distance)
+    res2, _ = fastdtw(arr1, arr2, dist=euclidean_distance)
+
+    return round(((res1 - res2) / res1) * 100)
 
 
 def get_coordinates(points):
