@@ -5,6 +5,9 @@ import numpy as np
 
 
 def analyze_distance(all_points, benchmark_movement):
+    normalize_points(all_points)
+    normalize_points(benchmark_movement)
+
     arr1 = get_coordinates(all_points)
     arr2 = get_coordinates(benchmark_movement)
 
@@ -29,3 +32,16 @@ def get_coordinates(points):
 
 def euclidean_distance(pose1, pose2):
     return np.linalg.norm(pose1 - pose2)
+
+
+def normalize_points(points):
+    min_x, min_y = 1000, 1000
+    for point in points:
+        for x, y in point.values():
+            min_x = x if x < min_x else min_x
+            min_y = y if y < min_y else min_y
+
+    for point in points:
+        for k in point.keys():
+            x, y = point[k]
+            point[k] = [x - min_x, y - min_y]

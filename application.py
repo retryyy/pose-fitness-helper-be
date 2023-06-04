@@ -279,7 +279,7 @@ def load_pose_types():
 @token_required
 @access_to_exercise
 def test(current_user, exercise_id, exercise):
-    spec_exercise = exercise['files'][1]
+    spec_exercise = exercise['files'][0]
 
     result = pose_analyze(spec_exercise['points'],
                        exercise['type'],
