@@ -1,22 +1,30 @@
-import sys
 import numpy as np
 from fastdtw import fastdtw
-import numpy as np
+import copy
 
 
 def analyze_distance(all_points, benchmark_movement):
-    normalize_points(all_points)
-    normalize_points(benchmark_movement)
+    res1 = distance(all_points, benchmark_movement)
+    res2 = distance(all_points, benchmark_movement, True)
+    return max(res1, res2)
 
-    arr1 = get_coordinates(all_points)
-    arr2 = get_coordinates(benchmark_movement)
 
-    np.set_printoptions(threshold=sys.maxsize)
+def distance(all_points, benchmark_movement, mirror=False):
+    all_points_copy = copy.deepcopy(all_points)
+    benchmark_movement_copy = copy.deepcopy(benchmark_movement)
+    if mirror:
+        mirror_points_x(all_points_copy)
+    normalize_points(all_points_copy)
+    normalize_points(benchmark_movement_copy)
+
+    arr1 = get_coordinates(all_points_copy)
+    arr2 = get_coordinates(benchmark_movement_copy)
 
     n1 = np.zeros_like(arr1)
     n2 = np.ones_like(arr2)
 
     res1, _ = fastdtw(n1, n2, dist=euclidean_distance)
+    res1 /= 2
     res2, _ = fastdtw(arr1, arr2, dist=euclidean_distance)
 
     return round(((res1 - res2) / res1) * 100)
@@ -45,3 +53,15 @@ def normalize_points(points):
         for k in point.keys():
             x, y = point[k]
             point[k] = [x - min_x, y - min_y]
+
+
+def mirror_points_x(points):
+    max_x = 0
+    for point in points:
+        for x, _ in point.values():
+            max_x = x if max_x < x else max_x
+
+    for point in points:
+        for k in point.keys():
+            x, y = point[k]
+            point[k] = [max_x - x, y]

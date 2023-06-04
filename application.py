@@ -12,7 +12,6 @@ import datetime
 import base64
 import json
 import os
-from pose import POSE_DEGREE_CHECK
 
 from video_util import image_get_first_frame, trim_video
 from pose_analyzer import pose_analyze
@@ -275,11 +274,11 @@ def load_pose_types():
         return {'data': json.load(read_file)}, 200
 
 
-@app.route('/exercises/<exercise_id>/test', methods=['GET'])
+@app.route('/exercises/<exercise_id>/test/<idx>', methods=['GET'])
 @token_required
 @access_to_exercise
-def test(current_user, exercise_id, exercise):
-    spec_exercise = exercise['files'][0]
+def test(current_user, exercise_id, idx, exercise):
+    spec_exercise = exercise['files'][int(idx)]
 
     result = pose_analyze(spec_exercise['points'],
                        exercise['type'],

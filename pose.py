@@ -32,6 +32,17 @@ POSE_DEGREE_CHECK = {
                 'append': 'incorrect',
                 'message': "Didn't go down enough for full muscle activation"
             }
+        }, {
+            'func': lambda degree: degree < 110,
+            'points': (RIGHT_ANKLE, RIGHT_HIP, RIGHT_SHOULDER),
+            'fulfilled': {
+                'append': 'incorrect',
+                'message': 'Bent over too much, lifted weight from back and not from legs',
+            },
+            'not_fulfilled': {
+                'append': 'correct',
+                'message': 'Perfectly held back (not bent over much), pushed weight from leg'
+            }
         }],
         'front': [{
             'func': lambda degree: degree > 90,
