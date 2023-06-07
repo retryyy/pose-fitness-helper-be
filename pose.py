@@ -37,7 +37,7 @@ POSE_DEGREE_CHECK = {
             'points': (RIGHT_ANKLE, RIGHT_HIP, RIGHT_SHOULDER),
             'fulfilled': {
                 'append': 'incorrect',
-                'message': 'Bent over too much, lifted weight from back and not from legs',
+                'message': 'Bent over too much, pushed from back and not from leg',
             },
             'not_fulfilled': {
                 'append': 'correct',

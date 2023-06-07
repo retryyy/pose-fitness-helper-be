@@ -274,6 +274,17 @@ def load_pose_types():
         return {'data': json.load(read_file)}, 200
 
 
+@app.route('/benchmark/<pose_type>/<view>', methods=['GET'])
+def get_benchmark_video(pose_type, view):
+    with open(f"./benchmark_exercises/gif/{pose_type}-{view}.gif", "rb") as image_file:
+        image_data = image_file.read()
+
+    encoded_data = base64.b64encode(image_data)
+    base64_string = encoded_data.decode("utf-8")
+
+    return {'data': base64_string}, 200
+
+
 @app.route('/exercises/<exercise_id>/test/<idx>', methods=['GET'])
 @token_required
 @access_to_exercise
@@ -281,8 +292,8 @@ def test(current_user, exercise_id, idx, exercise):
     spec_exercise = exercise['files'][int(idx)]
 
     result = pose_analyze(spec_exercise['points'],
-                       exercise['type'],
-                       spec_exercise['view'])
+                          exercise['type'],
+                          spec_exercise['view'])
 
     return {'data': result}, 200
 
