@@ -9,8 +9,12 @@ def pose_analyze(points, exercise_type, view):
         benchmark_points = json.load(read_file)['points']
         result_distance = analyze_distance(points, benchmark_points)
 
-    result_degree_correct, result_degree_incorrect = analyze_degree(
-        points, POSE_DEGREE_CHECK[exercise_type][view])
+    checks = POSE_DEGREE_CHECK.get(exercise_type, {}).get(view)
+    if checks is not None:
+        result_degree_correct, result_degree_incorrect = analyze_degree(
+            points, POSE_DEGREE_CHECK[exercise_type][view])
+    else:
+        result_degree_correct, result_degree_incorrect = [], []
 
     return collect_result(result_degree_correct,
                           result_degree_incorrect,

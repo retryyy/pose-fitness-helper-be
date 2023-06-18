@@ -1,5 +1,6 @@
 {
     "BARBELL_BACK_SQUAT": ["front", "side"],
     "DUMBBELL_SHOULDER_PRESS": ["front"],
-    "CLOSE_GRIP_CABLE_ROW": ["side"]
+    "CLOSE_GRIP_CABLE_ROW": ["side"],
+    "DUMBBELL_ROMANIAN_DEADLIFT": ["side"]
 }

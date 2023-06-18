@@ -103,5 +103,19 @@ POSE_DEGREE_CHECK = {
                 'message': "Perfectly held the shoulders and the wrists horizontally"
             }
         }]
+    },
+    'DUMBBELL_ROMANIAN_DEADLIFT': {
+        'side': [{
+            'func': lambda degree: degree < 80,
+            'points': (RIGHT_SHOULDER, RIGHT_HIP, RIGHT_ANKLE),
+            'fulfilled': {
+                'append': 'correct',
+                'message': 'Went down enough for full hamstring stretch',
+            },
+            'not_fulfilled': {
+                'append': 'incorrect',
+                'message': 'Didn\'t go down enough for full hamstring stretch'
+            }
+        }]
     }
 }

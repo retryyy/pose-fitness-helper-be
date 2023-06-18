@@ -50,6 +50,10 @@ def trim_video(file_content, start, end):
 
                 shapes = np.zeros_like(frame, np.uint8)
 
+                # points["23"] = points["24"]
+                # points["25"] = points["26"]
+                # points["27"] = points["28"]
+
                 for p1, p2 in POSE_CONNECTIONS:
                     cv2.line(shapes, points[str(p1)], points[str(p2)],
                              (255, 255, 255), thickness=4, lineType=8)
