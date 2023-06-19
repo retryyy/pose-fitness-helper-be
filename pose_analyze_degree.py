@@ -10,21 +10,23 @@ def analyze_degree(all_points, checks):
 
     for point_object in all_points:
         for check in checks:
-            points = check['points']
+            point_checks = check['points']
 
-            if len(points) == 3:
-                (point1, point2, point3) = points
-                degree = calculate_degree(
-                    point_object, point1, point2, point3)
-            elif len(points) == 4:
-                (point1, point2, point3, point4) = points
-                degree = calculate_degree_between_lines(
-                    point_object, point1, point2, point3, point4)
+            for points in point_checks:
+                if len(points) == 3:
+                    (point1, point2, point3) = points
+                    degree = calculate_degree(
+                        point_object, point1, point2, point3)
+                elif len(points) == 4:
+                    (point1, point2, point3, point4) = points
+                    degree = calculate_degree_between_lines(
+                        point_object, point1, point2, point3, point4)
 
-            if not check['truth']:
-                res = check['func'](degree)
-                if res:
-                    check['truth'] = True
+                if not check['truth']:
+                    res = check['func'](degree)
+                    if res:
+                        print(points)
+                        check['truth'] = True
 
     for check in checks:
         elem = check['fulfilled' if check['truth'] else 'not_fulfilled']
@@ -67,6 +69,8 @@ def calculate_closed_degree(x1, y1, x2, y2, x3, y3):
     angle_rad = math.acos(dot_product / (magnitude1 * magnitude2))
 
     angle_deg = math.degrees(angle_rad)
+
+    print(angle_deg)
 
     return angle_deg
 
