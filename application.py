@@ -20,8 +20,10 @@ app = Flask(__name__)
 CORS(app)
 
 client = pymongo.MongoClient(
-    f'mongodb://{os.environ["MONGO_HOST"]}:{os.environ["MONGO_PORT"]}', serverSelectionTimeoutMS=0)
-mongo = client.get_database('pose-fitness-helper')
+    f'mongodb://{os.environ["MONGO_HOST"]}:{os.environ["MONGO_PORT"]}', 
+    serverSelectionTimeoutMS=0
+)
+mongo = client.get_database(os.environ["DB_NAME"])
 fs = gridfs.GridFS(mongo)
 
 

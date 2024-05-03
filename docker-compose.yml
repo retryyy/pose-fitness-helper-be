@@ -3,9 +3,10 @@ services:
   mongo:
     image: mongo:latest
     ports:
-    - 27017:27017
+      - 27017:27017
 
   backend:
+    container_name: app-backend
     build: .
     links:
       - "mongo:mongo"
@@ -13,8 +14,14 @@ services:
       - "5000:5000"
     depends_on:
       - mongo
+    environment:
+      - MONGO_HOST=${MONGO_HOST}
+      - MONGO_PORT=${MONGO_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_NAME=${DB_NAME}
 
   frontend:
+    container_name: app-frontend
     build: ../pose-fitness-helper-fe
     ports:
       - "4200:80"
