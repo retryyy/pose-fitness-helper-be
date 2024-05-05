@@ -26,6 +26,8 @@ client = pymongo.MongoClient(
 mongo = client.get_database(os.environ["DB_NAME"])
 fs = gridfs.GridFS(mongo)
 
+with open("exercises.json", "r") as read_file:
+    config = json.load(read_file)
 
 def mongo_check(f):
     @wraps(f)
@@ -85,6 +87,7 @@ def access_to_exercise(f):
 def trim_file(current_user):
     start = float(request.args.get('start'))
     end = float(request.args.get('end'))
+    exercise_type = request.args.get('exerciseType')
     file = request.files["file"]
 
     file_size = int(request.headers['Content-length'])/(1024 * 1024)
@@ -93,7 +96,12 @@ def trim_file(current_user):
     if file.content_type != 'video/mp4':
         return {"message": "Unsupported file extension! Only MP4 is accepted"}, 415
 
-    trimmed_file, points = trim_video(file.read(), start, end)
+    trimmed_file, points = trim_video(
+        file.read(), 
+        start,
+        end, 
+        config[exercise_type]['points']
+    )
 
     return {
         'message': 'Trim of video was successful!',
@@ -141,11 +149,11 @@ def upload_exercise(current_user):
             exercise_files.append({
                 'file_id': str(file_id),
                 'view': view,
-                'analyze': pose_analyze(points, exercise_type, view),
+                'analyze': pose_analyze(points,exercise_type, view),
                 'points': points
             })
 
-        mongo.exercises.insert_one({
+        _id = mongo.exercises.insert_one({
             'owner': current_user['_id'],
             'created': datetime.datetime.utcnow(),
             'name': name,
@@ -154,7 +162,10 @@ def upload_exercise(current_user):
             'files': exercise_files
         })
 
-        return {"message": "Upload of video was successful!"}, 200
+        return {
+            "message": "Upload of video was successful!",
+            "data": str(_id.inserted_id)
+        }, 200
     except KeyError as e:
         return {"message": "Request body error: " + str(e)}, 400
 
@@ -272,8 +283,9 @@ def delete_exercise_file(current_user, exercise_id, file_id, exercise):
 
 @app.route('/config/posetypes', methods=['GET'])
 def load_pose_types():
-    with open("exercises.json", "r") as read_file:
-        return {'data': json.load(read_file)}, 200
+    return {
+        'data': {exercise: config[exercise]['views'] for exercise in config}
+    }, 200
 
 
 @app.route('/benchmark/<pose_type>/<view>', methods=['GET'])
@@ -322,13 +334,19 @@ def login():
 def register():
     users = mongo.users
     payload = request.json
-
     name = payload['name']
+    password = payload['payload']
+
+    if len(name) < 5:
+        return {"message": "User name needs to be minimum 5 letters!"}, 400
+    if len(password) < 5:
+        return {"message": "Password needs to be minimum 5 letters!"}, 400
+    
+    
     existing_user = users.find_one({'name': name})
 
     if existing_user is None:
-        hashpass = bcrypt.hashpw(
-            payload['password'].encode('utf-8'), bcrypt.gensalt())
+        hashpass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
         user = users.insert_one({
             'name': name,

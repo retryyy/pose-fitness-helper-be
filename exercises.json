@@ -1,6 +1,18 @@
 {
-    "BARBELL_BACK_SQUAT": ["front", "side"],
-    "DUMBBELL_SHOULDER_PRESS": ["front"],
-    "CLOSE_GRIP_CABLE_ROW": ["side"],
-    "DUMBBELL_ROMANIAN_DEADLIFT": ["side"]
+    "BARBELL_BACK_SQUAT": {
+        "views": ["front", "side"],
+        "points": [11, 12, 23, 24, 25, 26, 27, 28]
+    },
+    "DUMBBELL_SHOULDER_PRESS": {
+        "views": ["front"],
+        "points": [11, 12, 13, 14, 15, 16, 23, 24]
+    },
+    "CLOSE_GRIP_CABLE_ROW": {
+        "views": ["side"],
+        "points": [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+    },
+    "DUMBBELL_ROMANIAN_DEADLIFT": {
+        "views": ["side"],
+        "points": [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+    }
 }

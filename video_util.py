@@ -12,13 +12,10 @@ mp_pose = mp.solutions.pose
 
 HEIGHT = 400
 ALPHA = 0.4
-NEEDED_POINTS = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
-POSE_CONNECTIONS = frozenset(
-    {(p1, p2) for p1, p2 in mp_pose.POSE_CONNECTIONS if p1 in NEEDED_POINTS and p2 in NEEDED_POINTS}
-)
 
 
-def trim_video(file_content, start, end):
+def trim_video(file_content, start, end, needed_points):
+    print(needed_points)
     fps = iio.immeta(file_content, plugin="pyav")["fps"]
 
     start_time = start * fps
@@ -43,14 +40,18 @@ def trim_video(file_content, start, end):
             points = {}
             if results.pose_landmarks:
                 for id, lm in enumerate(results.pose_landmarks.landmark):
-                    if id not in NEEDED_POINTS:
+                    if id not in needed_points:
                         continue
 
                     points[str(id)] = (int(lm.x * w), int(lm.y * h))
 
                 shapes = np.zeros_like(frame, np.uint8)
 
-                for p1, p2 in POSE_CONNECTIONS:
+                pose_connections = frozenset(
+                    {(p1, p2) for p1, p2 in mp_pose.POSE_CONNECTIONS if p1 in needed_points and p2 in needed_points}
+                )
+
+                for p1, p2 in pose_connections:
                     cv2.line(shapes, points[str(p1)], points[str(p2)],
                              (255, 255, 255), thickness=4, lineType=8)
 

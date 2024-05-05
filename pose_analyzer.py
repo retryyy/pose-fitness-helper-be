@@ -6,8 +6,12 @@ from pose_analyze_distance import analyze_distance
 
 def pose_analyze(points, exercise_type, view):
     with open(f"./benchmark_exercises/{exercise_type}-{view}.json", "r") as read_file:
-        benchmark_points = json.load(read_file)['points']
-        result_distance = analyze_distance(points, benchmark_points)
+        points_to_check = list(points[0].keys())
+        reduced_benchmark_points = reduce_points(
+            json.load(read_file)['points'], 
+            points_to_check
+        )
+        result_distance = analyze_distance(points, reduced_benchmark_points)
 
     checks = POSE_DEGREE_CHECK.get(exercise_type, {}).get(view)
     if checks is not None:
@@ -20,6 +24,11 @@ def pose_analyze(points, exercise_type, view):
                           result_degree_incorrect,
                           result_distance)
 
+def reduce_points(base_points, points_to_check):
+    return [
+        {i: frame[i] for i in frame if i in points_to_check}
+        for frame in base_points
+    ]
 
 def collect_result(correct, incorrect, score):
     return {
