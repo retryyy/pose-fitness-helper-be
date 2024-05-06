@@ -12,10 +12,10 @@ mp_pose = mp.solutions.pose
 
 HEIGHT = 400
 ALPHA = 0.4
-
+ALL_POINTS = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
 
 def trim_video(file_content, start, end, needed_points):
-    print(needed_points)
+    needed_points = ALL_POINTS if needed_points is None else needed_points
     fps = iio.immeta(file_content, plugin="pyav")["fps"]
 
     start_time = start * fps

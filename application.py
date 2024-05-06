@@ -91,8 +91,8 @@ def trim_file(current_user):
     file = request.files["file"]
 
     file_size = int(request.headers['Content-length'])/(1024 * 1024)
-    if file_size > 30:
-        return {"message": "File is too big! Maximum file size is 30MB"}, 413
+    if file_size > 40:
+        return {"message": "File is too big! Maximum file size is 40MB"}, 413
     if file.content_type != 'video/mp4':
         return {"message": "Unsupported file extension! Only MP4 is accepted"}, 415
 
@@ -100,7 +100,7 @@ def trim_file(current_user):
         file.read(), 
         start,
         end, 
-        config[exercise_type]['points']
+        None if (exercise_type is None or exercise_type == 'undefined') else config[exercise_type]['points']
     )
 
     return {
@@ -335,7 +335,7 @@ def register():
     users = mongo.users
     payload = request.json
     name = payload['name']
-    password = payload['payload']
+    password = payload['password']
 
     if len(name) < 5:
         return {"message": "User name needs to be minimum 5 letters!"}, 400

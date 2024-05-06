@@ -14,5 +14,13 @@
     "DUMBBELL_ROMANIAN_DEADLIFT": {
         "views": ["side"],
         "points": [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+    },
+    "TRICEPS_PUSHDOWN": {
+        "views": ["side"],
+        "points": [11, 12, 13, 14, 15, 16, 23, 24, 25, 26]
+    },
+    "DUMBBELL_LATERAL_RAISE": {
+        "views": ["side"],
+        "points": [11, 12, 13, 14, 15, 16, 23, 24, 25, 26]
     }
 }
