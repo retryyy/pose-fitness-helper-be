@@ -13,8 +13,8 @@ import base64
 import json
 import os
 
-from video_util import image_get_first_frame, trim_video
-from pose_analyzer import pose_analyze
+from video.video_util import image_get_first_frame, trim_video
+from pose_analyze.pose_analyzer import pose_analyze
 
 app = Flask(__name__)
 CORS(app)
@@ -125,7 +125,7 @@ def upload_exercise(current_user):
         if length_files == 0:
             return {"message": "No file was included!"}, 400
         if len(name) < 5:
-            return {"message": "Exercise name needs to be minimum 5 letters!"}, 400
+            return {"message": "Exercise name needs to be minimum 5 characters!"}, 400
 
         index_correct = "thumbnailIndex" in body and length_files > body['thumbnailIndex'] >= 0
         thumbnail_index = body['thumbnailIndex'] if index_correct else 0
@@ -147,7 +147,7 @@ def upload_exercise(current_user):
             exercise_type = body['type']
 
             exercise_files.append({
-                'file_id': str(file_id),
+                'file_id': file_id,
                 'view': view,
                 'analyze': pose_analyze(points,exercise_type, view),
                 'points': points
@@ -158,7 +158,7 @@ def upload_exercise(current_user):
             'created': datetime.datetime.utcnow(),
             'name': name,
             'type': exercise_type,
-            'thumbnail_id': str(thumbnail_id),
+            'thumbnail_id': thumbnail_id,
             'files': exercise_files
         })
 
@@ -188,7 +188,7 @@ def add_exercise_file(current_user, exercise_id, exercise):
         {'_id': ObjectId(exercise_id)},
         {'$push': {
             'files': {
-                'file_id': str(file_id),
+                'file_id': file_id,
                 'view': view,
                 'analyze': pose_analyze(points, exercise['type'], view),
                 'points': points
@@ -216,7 +216,7 @@ def load_exercises(current_user):
 
     payload = []
     for exercise in exercises:
-        byte_file = fs.get(ObjectId(exercise['thumbnail_id'])).read()
+        byte_file = fs.get(exercise['thumbnail_id']).read()
 
         payload.append({
             'id': str(exercise['_id']),
@@ -234,11 +234,11 @@ def load_exercises(current_user):
 def load_exercise(current_user, exercise_id, exercise):
     files = []
     for file in exercise['files']:
-        byte_file = fs.get(ObjectId(file['file_id'])).read()
+        byte_file = fs.get(file['file_id']).read()
         content = base64.b64encode(byte_file).decode()
 
         files.append({
-            'file_id': file['file_id'],
+            'file_id': str(file['file_id']),
             'file': content,
             'view': file['view'],
             'analyze': file['analyze']
@@ -258,9 +258,9 @@ def load_exercise(current_user, exercise_id, exercise):
 @token_required
 @access_to_exercise
 def delete_exercise(current_user, exercise_id, exercise):
-    fs.delete(ObjectId(exercise['thumbnail_id']))
+    fs.delete(exercise['thumbnail_id'])
     for file in exercise['files']:
-        fs.delete(ObjectId(file['file_id']))
+        fs.delete(file['file_id'])
     mongo.exercises.delete_one({'_id': ObjectId(exercise_id)})
     return {'message': 'Exercise deleted'}, 200
 
@@ -274,7 +274,7 @@ def delete_exercise_file(current_user, exercise_id, file_id, exercise):
         {'_id': ObjectId(exercise_id)},
         {'$pull': {
             'files': {
-                'file_id': file_id,
+                'file_id': ObjectId(file_id),
             }
         }}
     )
@@ -288,9 +288,9 @@ def load_pose_types():
     }, 200
 
 
-@app.route('/benchmark/<pose_type>/<view>', methods=['GET'])
-def get_benchmark_video(pose_type, view):
-    with open(f"./benchmark_exercises/gif/{pose_type}-{view}.gif", "rb") as image_file:
+@app.route('/benchmark/<exercise_type>/<view>', methods=['GET'])
+def get_benchmark_video(exercise_type, view):
+    with open(f"./benchmark_exercises/gif/{exercise_type}-{view}.gif", "rb") as image_file:
         image_data = image_file.read()
 
     encoded_data = base64.b64encode(image_data)
@@ -338,9 +338,9 @@ def register():
     password = payload['password']
 
     if len(name) < 5:
-        return {"message": "User name needs to be minimum 5 letters!"}, 400
+        return {"message": "Username needs to be minimum 5 characters!"}, 400
     if len(password) < 5:
-        return {"message": "Password needs to be minimum 5 letters!"}, 400
+        return {"message": "Password needs to be minimum 5 characters!"}, 400
     
     
     existing_user = users.find_one({'name': name})

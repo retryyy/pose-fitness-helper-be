@@ -1,13 +1,13 @@
 import json
-from pose import POSE_DEGREE_CHECK
-from pose_analyze_degree import analyze_degree
-from pose_analyze_distance import analyze_distance
+from pose_analyze.pose import POSE_DEGREE_CHECK
+from pose_analyze.pose_analyze_degree import analyze_degree
+from pose_analyze.pose_analyze_distance import analyze_distance
 
 
 def pose_analyze(points, exercise_type, view):
     with open(f"./benchmark_exercises/{exercise_type}-{view}.json", "r") as read_file:
         points_to_check = list(points[0].keys())
-        reduced_benchmark_points = reduce_points(
+        reduced_benchmark_points = _reduce_points(
             json.load(read_file)['points'], 
             points_to_check
         )
@@ -20,17 +20,17 @@ def pose_analyze(points, exercise_type, view):
     else:
         result_degree_correct, result_degree_incorrect = [], []
 
-    return collect_result(result_degree_correct,
+    return _collect_result(result_degree_correct,
                           result_degree_incorrect,
                           result_distance)
 
-def reduce_points(base_points, points_to_check):
+def _reduce_points(base_points, points_to_check):
     return [
         {i: frame[i] for i in frame if i in points_to_check}
         for frame in base_points
     ]
 
-def collect_result(correct, incorrect, score):
+def _collect_result(correct, incorrect, score):
     return {
         'correct': correct,
         'incorrect': incorrect,
