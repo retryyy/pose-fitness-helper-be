@@ -130,7 +130,7 @@ def upload_exercise(current_user):
         index_correct = "thumbnailIndex" in body and length_files > body['thumbnailIndex'] >= 0
         thumbnail_index = body['thumbnailIndex'] if index_correct else 0
 
-        exercise_files = []
+        movements = []
         for i in range(len(files)):
             file = files[i]
             img = file.read()
@@ -146,10 +146,10 @@ def upload_exercise(current_user):
             view = file_name.split('.')[0]
             exercise_type = body['type']
 
-            exercise_files.append({
+            movements.append({
                 'file_id': file_id,
                 'view': view,
-                'analyze': pose_analyze(points,exercise_type, view),
+                'analysis': pose_analyze(points, exercise_type, view),
                 'points': points
             })
 
@@ -159,7 +159,7 @@ def upload_exercise(current_user):
             'name': name,
             'type': exercise_type,
             'thumbnail_id': thumbnail_id,
-            'files': exercise_files
+            'movements': movements
         })
 
         return {
@@ -170,7 +170,7 @@ def upload_exercise(current_user):
         return {"message": "Request body error: " + str(e)}, 400
 
 
-@app.route('/exercises/<exercise_id>/files', methods=['POST'])
+@app.route('/exercises/<exercise_id>/movements', methods=['POST'])
 @token_required
 @access_to_exercise
 def add_exercise_file(current_user, exercise_id, exercise):
@@ -187,10 +187,10 @@ def add_exercise_file(current_user, exercise_id, exercise):
     mongo.exercises.update(
         {'_id': ObjectId(exercise_id)},
         {'$push': {
-            'files': {
+            'movements': {
                 'file_id': file_id,
                 'view': view,
-                'analyze': pose_analyze(points, exercise['type'], view),
+                'analysis': pose_analyze(points, exercise['type'], view),
                 'points': points
             }
         }}
@@ -232,16 +232,16 @@ def load_exercises(current_user):
 @token_required
 @access_to_exercise
 def load_exercise(current_user, exercise_id, exercise):
-    files = []
-    for file in exercise['files']:
-        byte_file = fs.get(file['file_id']).read()
+    movements = []
+    for movement in exercise['movements']:
+        byte_file = fs.get(movement['file_id']).read()
         content = base64.b64encode(byte_file).decode()
 
-        files.append({
-            'file_id': str(file['file_id']),
+        movements.append({
+            'file_id': str(movement['file_id']),
             'file': content,
-            'view': file['view'],
-            'analyze': file['analyze']
+            'view': movement['view'],
+            'analysis': movement['analysis']
         })
 
     return {
@@ -249,7 +249,7 @@ def load_exercise(current_user, exercise_id, exercise):
             'name': exercise['name'],
             'type': exercise['type'],
             'created': exercise['created'],
-            'files': files
+            'movements': movements
         }
     }, 200
 
@@ -259,22 +259,22 @@ def load_exercise(current_user, exercise_id, exercise):
 @access_to_exercise
 def delete_exercise(current_user, exercise_id, exercise):
     fs.delete(exercise['thumbnail_id'])
-    for file in exercise['files']:
-        fs.delete(file['file_id'])
+    for movement in exercise['movements']:
+        fs.delete(movement['file_id'])
     mongo.exercises.delete_one({'_id': ObjectId(exercise_id)})
     return {'message': 'Exercise deleted'}, 200
 
 
-@app.route('/exercises/<exercise_id>/files/<file_id>', methods=['DELETE'])
+@app.route('/exercises/<exercise_id>/movements/<movement_id>', methods=['DELETE'])
 @token_required
 @access_to_exercise
-def delete_exercise_file(current_user, exercise_id, file_id, exercise):
-    fs.delete(ObjectId(file_id))
+def delete_exercise_file(current_user, exercise_id, movement_id, exercise):
+    fs.delete(ObjectId(movement_id))
     mongo.exercises.update(
         {'_id': ObjectId(exercise_id)},
         {'$pull': {
-            'files': {
-                'file_id': ObjectId(file_id),
+            'movements': {
+                'file_id': ObjectId(movement_id),
             }
         }}
     )
@@ -297,19 +297,6 @@ def get_benchmark_video(exercise_type, view):
     base64_string = encoded_data.decode("utf-8")
 
     return {'data': base64_string}, 200
-
-
-@app.route('/exercises/<exercise_id>/test/<idx>', methods=['GET'])
-@token_required
-@access_to_exercise
-def test(current_user, exercise_id, idx, exercise):
-    spec_exercise = exercise['files'][int(idx)]
-
-    result = pose_analyze(spec_exercise['points'],
-                          exercise['type'],
-                          spec_exercise['view'])
-
-    return {'data': result}, 200
 
 
 @app.route('/login', methods=['POST'])
