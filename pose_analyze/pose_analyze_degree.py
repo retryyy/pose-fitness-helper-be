@@ -15,12 +15,19 @@ def analyze_degree(all_points, checks):
             for points in point_checks:
                 if len(points) == 3:
                     (point1, point2, point3) = points
-                    degree = _calculate_degree(
-                        point_object, point1, point2, point3)
+                    degree = _calculate_closed_degree(
+                        point_object[str(point1)],
+                        point_object[str(point2)],
+                        point_object[str(point3)]
+                    )
                 elif len(points) == 4:
                     (point1, point2, point3, point4) = points
-                    degree = _calculate_degree_between_lines(
-                        point_object, point1, point2, point3, point4)
+                    degree = _calculate_closed_degree_between_lines(
+                        point_object[str(point1)],
+                        point_object[str(point2)],
+                        point_object[str(point3)],
+                        point_object[str(point4)]
+                    )
 
                 if not check['truth']:
                     res = check['func'](degree)
@@ -38,25 +45,11 @@ def analyze_degree(all_points, checks):
 
     return correct, incorrect
 
+def _calculate_closed_degree(point1, point2, point3):
+    x1, y1 = point1
+    x2, y2 = point2
+    x3, y3 = point3
 
-def _calculate_degree(points, point_name1, point_name2, point_name3):
-    x1, y1 = points[str(point_name1)]
-    x2, y2 = points[str(point_name2)]
-    x3, y3 = points[str(point_name3)]
-
-    return _calculate_closed_degree(x1, y1, x2, y2, x3, y3)
-
-
-def _calculate_degree_between_lines(points, point_name1, point_name2, point_name3, point_name4):
-    x1, y1 = points[str(point_name1)]
-    x2, y2 = points[str(point_name2)]
-    x3, y3 = points[str(point_name3)]
-    x4, y4 = points[str(point_name4)]
-
-    return _calculate_closed_degree_between_lines(x1, y1, x2, y2, x3, y3, x4, y4)
-
-
-def _calculate_closed_degree(x1, y1, x2, y2, x3, y3):
     dx1 = x1 - x2
     dy1 = y1 - y2
     dx2 = x3 - x2
@@ -71,7 +64,12 @@ def _calculate_closed_degree(x1, y1, x2, y2, x3, y3):
     return angle_deg
 
 
-def _calculate_closed_degree_between_lines(x1, y1, x2, y2, x3, y3, x4, y4):
+def _calculate_closed_degree_between_lines(point1, point2, point3, point4):
+    x1, y1 = point1
+    x2, y2 = point2
+    x3, y3 = point3
+    x4, y4 = point4
+
     line1_start = (x1, y1)
     line1_end = (x2, y2)
     line2_start = (x3, y3)

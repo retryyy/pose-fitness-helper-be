@@ -114,7 +114,7 @@ POSE_DEGREE_CHECK = {
     'DUMBBELL_ROMANIAN_DEADLIFT': {
         'side': [
             {
-                'func': lambda degree: degree < 80,
+                'func': lambda degree: degree < 90,
                 'points': [(RIGHT_SHOULDER, RIGHT_HIP, RIGHT_ANKLE)],
                 'fulfilled': {
                     'append': 'correct',

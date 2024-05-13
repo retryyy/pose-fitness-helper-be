@@ -3,5 +3,10 @@
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
         "./auth"
-    ]
+    ],
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
