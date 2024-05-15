@@ -1,9 +1,13 @@
 {
+    "DUMBBELL_SQUAT": {
+        "views": ["side"],
+        "points": [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+    },
     "BARBELL_BACK_SQUAT": {
-        "views": ["front", "side"],
+        "views": ["front"],
         "points": [11, 12, 23, 24, 25, 26, 27, 28]
     },
-    "DUMBBELL_SHOULDER_PRESS": {
+    "SHOULDER_PRESS": {
         "views": ["front"],
         "points": [11, 12, 13, 14, 15, 16, 23, 24]
     },

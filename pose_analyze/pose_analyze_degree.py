@@ -58,7 +58,9 @@ def _calculate_closed_degree(point1, point2, point3):
     dot_product = dx1*dx2 + dy1*dy2
     magnitude1 = math.sqrt(dx1**2 + dy1**2)
     magnitude2 = math.sqrt(dx2**2 + dy2**2)
-    angle_rad = math.acos(dot_product / (magnitude1 * magnitude2))
+
+    calc = _get_calc(dot_product / (magnitude1 * magnitude2))
+    angle_rad = math.acos(calc)
 
     angle_deg = math.degrees(angle_rad)
     return angle_deg
@@ -83,8 +85,18 @@ def _calculate_closed_degree_between_lines(point1, point2, point3, point4):
     dot_product = line1_dx*line2_dx + line1_dy*line2_dy
     magnitude1 = math.sqrt(line1_dx**2 + line1_dy**2)
     magnitude2 = math.sqrt(line2_dx**2 + line2_dy**2)
-    angle_rad = math.acos(dot_product/(magnitude1*magnitude2))
+    calc = _get_calc(dot_product / (magnitude1 * magnitude2))
+    angle_rad = math.acos(calc)
 
     angle_deg = math.degrees(angle_rad)
 
     return angle_deg
+
+
+def _get_calc(num):
+    if num > 1:
+        return 1
+    elif num < 0:
+        return 0
+    else:
+        return num

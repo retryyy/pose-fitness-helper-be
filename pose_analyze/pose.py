@@ -10,20 +10,9 @@ RIGHT_KNEE = 26
 RIGHT_ANKLE = 28
 
 POSE_DEGREE_CHECK = {
-    'BARBELL_BACK_SQUAT': {
+    'DUMBBELL_SQUAT': {
         'side': [
             {
-                'func': lambda degree: degree > 170,
-                'points': [(RIGHT_HIP, RIGHT_KNEE, RIGHT_ANKLE)],
-                'fulfilled': {
-                    'append': 'incorrect',
-                    'message': 'Legs were too straight while standing which can hurt the knee using bigger weights',
-                },
-                'not_fulfilled': {
-                    'append': 'correct',
-                    'message': 'Knees were slightly bent which protects the joints'
-                }
-            }, {
                 'func': lambda degree: degree < 95,
                 'points': [(RIGHT_HIP, RIGHT_KNEE, RIGHT_ANKLE)],
                 'fulfilled': {
@@ -35,7 +24,7 @@ POSE_DEGREE_CHECK = {
                     'message': "Didn't go down enough for full muscle activation"
                 }
             }, {
-                'func': lambda degree: degree < 110,
+                'func': lambda degree: degree < 90,
                 'points': [(RIGHT_ANKLE, RIGHT_HIP, RIGHT_SHOULDER)],
                 'fulfilled': {
                     'append': 'incorrect',
@@ -46,7 +35,9 @@ POSE_DEGREE_CHECK = {
                     'message': 'Perfectly held back (not bent over much), pushed weight from leg'
                 }
             }
-        ],
+        ]
+    },
+    'BARBELL_BACK_SQUAT': {
         'front': [
             {
                 'func': lambda degree: degree > 90,
@@ -73,7 +64,7 @@ POSE_DEGREE_CHECK = {
             }
         ]
     },
-    'DUMBBELL_SHOULDER_PRESS': {
+    'SHOULDER_PRESS': {
         'front': [
             {
                 'func': lambda degree: degree < 100,
@@ -87,7 +78,7 @@ POSE_DEGREE_CHECK = {
                     'message': 'Hands were pointing too much outwards on the top'
                 }
             }, {
-                'func': lambda degree: degree < 70,
+                'func': lambda degree: degree < 60,
                 'points': [(RIGHT_ELBOW, RIGHT_SHOULDER, RIGHT_HIP)],
                 'fulfilled': {
                     'append': 'incorrect',
@@ -111,6 +102,33 @@ POSE_DEGREE_CHECK = {
             }
         ]
     },
+    'DUMBBELL_LATERAL_RAISE': {
+        'side': [
+            {
+                'func': lambda degree: degree > 160,
+                'points': [(RIGHT_KNEE, RIGHT_HIP, RIGHT_SHOULDER)],
+                'fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Standing too straight, should bend a little',
+                },
+                'not_fulfilled': {
+                    'append': 'correct',
+                    'message': 'Legs were not too straight'
+                }
+            }, {
+                'func': lambda degree: degree < 20,
+                'points': [(RIGHT_WRIST, RIGHT_SHOULDER, RIGHT_HIP)],
+                'fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Should raise the dumbbel slightly forward',
+                },
+                'not_fulfilled': {
+                    'append': 'correct',
+                    'message': "Raised the dumbbel slightly forward"
+                }
+            }
+        ]
+    },
     'DUMBBELL_ROMANIAN_DEADLIFT': {
         'side': [
             {
@@ -123,6 +141,18 @@ POSE_DEGREE_CHECK = {
                 'not_fulfilled': {
                     'append': 'incorrect',
                     'message': 'Didn\'t go down enough for full hamstring stretch'
+                }
+            },
+            {
+                'func': lambda degree: degree < 150,
+                'points': [(RIGHT_HIP, RIGHT_KNEE, RIGHT_ANKLE)],
+                'fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Legs were not straight enough for full hamstring stretch',
+                },
+                'not_fulfilled': {
+                    'append': 'correct',
+                    'message': 'Legs were straight enough for full hamstring stretch'
                 }
             }
         ]
@@ -157,5 +187,45 @@ POSE_DEGREE_CHECK = {
                 }
             }
         ]
-    }
+    },
+    'TRICEPS_PUSHDOWN': {
+        'side': [
+            {
+                'func': lambda degree: degree > 30,
+                'points': [(RIGHT_HIP, RIGHT_SHOULDER, RIGHT_ELBOW)],
+                'fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Too much shoulder movement',
+                },
+                'not_fulfilled': {
+                    'append': 'correct',
+                    'message': 'Didn\'t move shoulder too much'
+                }
+            },
+            {
+                'func': lambda degree: degree > 160,
+                'points': [(RIGHT_SHOULDER, RIGHT_HIP, RIGHT_KNEE)],
+                'fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Standing too straight, should bend a little',
+                },
+                'not_fulfilled': {
+                    'append': 'correct',
+                    'message': 'Legs were not too straight'
+                }
+            },
+            {
+                'func': lambda degree: degree < 90,
+                'points': [(RIGHT_SHOULDER, RIGHT_ELBOW, RIGHT_WRIST)],
+                'fulfilled': {
+                    'append': 'correct',
+                    'message': 'Bent the elbow enough for full triceps stretch',
+                },
+                'not_fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Didn\'t bend the elbow enough for full triceps stretch'
+                }
+            },
+        ]
+    },
 }
