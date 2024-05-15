@@ -34,6 +34,28 @@ POSE_DEGREE_CHECK = {
                     'append': 'correct',
                     'message': 'Perfectly held back (not bent over much), pushed weight from leg'
                 }
+            }, {
+                'func': lambda degree: degree > 170,
+                'points': [(RIGHT_SHOULDER, RIGHT_WRIST, RIGHT_ANKLE)],
+                'fulfilled': {
+                    'append': 'correct',
+                    'message': 'Kept hands next to the body for full balance',
+                },
+                'not_fulfilled': {
+                    'append': 'incorrect',
+                    'message': "Didn\'t keep hands next to the body for full balance"
+                }
+            }, {
+                'func': lambda degree: degree < 150,
+                'points': [(RIGHT_SHOULDER, RIGHT_ELBOW, RIGHT_WRIST)],
+                'fulfilled': {
+                    'append': 'incorrect',
+                    'message': 'Didn\'t keep hands totally straight',
+                },
+                'not_fulfilled': {
+                    'append': 'correct',
+                    'message': "Kept hands totally straight"
+                }
             }
         ]
     },

@@ -96,7 +96,7 @@ def _calculate_closed_degree_between_lines(point1, point2, point3, point4):
 def _get_calc(num):
     if num > 1:
         return 1
-    elif num < 0:
-        return 0
+    elif num < -1:
+        return -1
     else:
         return num
